@@ -21,7 +21,7 @@ iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() );
 
 ## Getting Started
 
-This crate help you to take first `Err` in a [`Result`] and keep iterating without
+This crate help you to take first `Err` in a `Result` and keep iterating without
 pay for allocation, here is a sample:
 
 ```rust
@@ -40,7 +40,7 @@ let ans = [Ok::<u8, u8>(0), Err(1), Err(2)]
 assert_eq!(ans, Err(1));
 ```
 
-See [`FirstErr::first_err_or_else()`] for more detail.
+Please check [API document](https://docs.rs/first-err) for more detail.
 
 
 
