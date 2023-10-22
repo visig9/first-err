@@ -1,10 +1,14 @@
+- [Api Document](https://docs.rs/first-err)
+
+
+
 # `first-err`
 
-Find first `Err` in `Iterator<Result<T, E>>` and allow to iterating continuously.
+Find the first `Err` in `Iterator<Result<T, E>>` and allow continuous iteration.
 
 This crate is specifically designed to replace the following pattern without allocation:
 
-```rust
+```txt
 // iter: impl Iterator<Result<T, E>>
 iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() );
 ```
@@ -14,42 +18,37 @@ iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() );
 ## Features
 
 - Find first `Err` in `Iterator<Result<T, E>>` and allow to iterating continuously.
-- Speed: rough on par with hand write loop, use lazy evaluation and without alloc.
-- Minimized: `no_std`, no `alloc`, no dependency.
+- Speed: Roughly on par with a hand-written loop, using lazy evaluation and without allocation.
+- Minimized: no `std`, no `alloc`, no dependency.
 
 
 
 ## Getting Started
 
-This crate help you to take first `Err` in a `Result` and keep iterating without
-pay for allocation, here is a sample:
-
 ```rust
 use first_err::FirstErr;
 
 // Everything is Ok.
-let ans = [Ok::<u8, u8>(0), Ok(1), Ok(2)]
+let result = [Ok::<u8, u8>(0), Ok(1), Ok(2)]
     .into_iter()
     .first_err_or_else(|iter| iter.sum::<u8>());
-assert_eq!(ans, Ok(3));
+assert_eq!(result, Ok(3));
 
 // Contains some `Err` values.
-let ans = [Ok::<u8, u8>(0), Err(1), Err(2)]
+let result = [Ok::<u8, u8>(0), Err(1), Err(2)]
     .into_iter()
     .first_err_or_else(|iter| iter.sum::<u8>());
-assert_eq!(ans, Err(1));
+assert_eq!(result, Err(1));
 ```
-
-Please check [API document](https://docs.rs/first-err) for more detail.
 
 
 
 ## Why
 
-In Rust, I always encountered a kind of pattern which is I need to do something on all
-items within an iterator, and should also cancel as soon as possible if any error is
-found in current working layer. But, if no error found, the iterator should able to run
-continuously and allow me to do further transform.
+In Rust, I frequently encounter a pattern where I need to perform actions on all
+items within an iterator, and halt immediately if any error is detected in the layer
+I'm working on. But if no error found, the iterator should able to run continuously
+and allow me to do further transform.
 
 The pattern typically looks as follows:
 
@@ -66,8 +65,8 @@ fn fallible_sum(iter: impl IntoIterator<Item = Result<u8, u8>>) -> Result<u8, u8
     Ok(sum)
 }
 
-let ans = fallible_sum(array);
-assert_eq!(ans, Err(1));
+let result = fallible_sum(array);
+assert_eq!(result, Err(1));
 ```
 
 In theory, this allocation is not necessary. We can just write that code as an old good
@@ -86,14 +85,14 @@ fn fallible_sum(iter: impl IntoIterator<Item = Result<u8, u8>>) -> Result<u8, u8
     Ok(sum)
 }
 
-let ans = fallible_sum(array);
-assert_eq!(ans, Err(1))
+let result = fallible_sum(array);
+assert_eq!(result, Err(1))
 ```
 
-Using a loop is not bad at all. But for some situation, I would like to keep iterator
-chainable as much as possible. This crate offers another approach to achieve it.
+Using a loop is not bad at all. However, in some situations, maintaining a chainable iterator
+is preferable.
 
-And even further, sometime life may not simple like previous example. consider is one:
+Furthermore, some scenarios may not be as simple as the previous example. Consider this one:
 
 ```rust
 // The second layer `Result` is usually created by further transform after the first layer
@@ -115,12 +114,12 @@ fn fallible_sum(
     Ok(sum)
 }
 
-let ans = fallible_sum(array);
-assert_eq!(ans, Err(2));
+let result = fallible_sum(array);
+assert_eq!(result, Err(2));
 ```
 
-Above logic may little hard to write as a loop without alloc. But this crate can do it
-for you:
+Implementing the above logic in a loop without allocation may be error-prone and complicated.
+This crate simplifies that for you:
 
 ```rust
 let array: [Result<Result<u8, u8>, u8>; 3] = [Ok(Ok(0)), Ok(Err(1)), Err(2)];
@@ -138,24 +137,26 @@ fn fallible_sum(
         .and_then(|res_res| res_res)
 }
 
-let ans = fallible_sum(array);
-assert_eq!(ans, Err(2));
+let result = fallible_sum(array);
+assert_eq!(result, Err(2));
 ```
 
 
 
 ## Benchmark
 
-This crate's performance character is designed for rough on par with hand write loop.
-But compiler may do some better optimization for one or another in difference situations.
+The performance of this crate is designed to be roughly on par with hand-written loops.
+However, the compiler might apply different optimizations in various situations, and favoring
+one approach over the others.
 
-If you want do benchmark by yourself, use follows command:
+If you want to to do a benchmark by yourself, use the following command:
 
 ```sh
 cargo bench --bench benchmark -- --output-format bencher
 ```
 
-And don't forget check which code I actual bench in `benches` folder.
+Also, don't forget to check the actual code that is used for benchmarking, which is in the
+`benches` folder.
 
 
 
@@ -170,6 +171,8 @@ And don't forget check which code I actual bench in `benches` folder.
   - kernel: Linux 6.1.0-10-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.38-1 (2023-07-14)
   - rustc: 1.72.0 (5680fa18f 2023-08-23)
   - cargo: 1.72.0 (103a7ff2e 2023-08-15)
+  - first-err: v0.1.0
+  - date: 2023-10-21
 
   ### Results
 
