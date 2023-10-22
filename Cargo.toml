@@ -1,0 +1,23 @@
+[package]
+name = "first-err"
+version = "0.1.0"
+edition = "2021"
+authors = ["ikai"]
+description = "Equivalent of iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() ) pattern without allocation."
+readme = "README.md"
+repository = "https://github.com/visig9/first-err"
+license = "MIT"
+keywords = ["iterator", "collect"]
+catrgories = ["rust-patterns", "no-std", "no-std::no-alloc"]
+
+
+[dependencies]
+
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+
+[[bench]]
+name = "benchmark"
+harness = false
