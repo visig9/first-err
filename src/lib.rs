@@ -170,6 +170,8 @@
 
 #![no_std]
 
+use core::iter::FusedIterator;
+
 /// Iterator can take first error from inner iterator.
 ///
 /// See [`FirstErr::first_err_or_else()`] for more details.
@@ -226,6 +228,8 @@ where
         }
     }
 }
+
+impl<I, T, E> FusedIterator for FirstErrIter<I, T, E> where I: Iterator<Item = Result<T, E>> {}
 
 /// This trait provides `first_err_or_else()` method on all `Iterator<Item = Result<T, E>>`.
 pub trait FirstErr<I, T, E> {
