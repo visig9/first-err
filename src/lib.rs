@@ -4,7 +4,7 @@
 //!
 //! This crate is specifically designed to replace the following pattern without allocation:
 //!
-//! ```rust
+//! ```txt
 //! // iter: impl Iterator<Result<T, E>>
 //! iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() );
 //! ```
