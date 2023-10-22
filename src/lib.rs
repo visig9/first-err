@@ -232,7 +232,7 @@ where
 impl<I, T, E> FusedIterator for FirstErrIter<I, T, E> where I: Iterator<Item = Result<T, E>> {}
 
 /// This trait provides `first_err_or_else()` method on all `Iterator<Item = Result<T, E>>`.
-pub trait FirstErr<I, T, E> {
+pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
     /// Returns the first `Err` item in the current iterator, or an `Ok` value produced by the
     /// `f` closure. If no error is found, this method will consume all items in the current
     /// iterator before returning.
@@ -312,9 +312,25 @@ pub trait FirstErr<I, T, E> {
     ///     .first_err_or_else(|iter| iter); // compile error: can't leak `iter` out
     /// # }
     /// ```
+    #[inline]
     fn first_err_or_else<F, O>(self, f: F) -> Result<O, E>
     where
-        F: FnOnce(&mut FirstErrIter<Self, T, E>) -> O;
+        F: FnOnce(&mut FirstErrIter<Self, T, E>) -> O,
+        Self: Sized,
+    {
+        let mut first_err_iter = FirstErrIter {
+            inner: self,
+            first_err: None,
+        };
+
+        let output = f(&mut first_err_iter);
+
+        // Take the `first_err` back if err exists in whole iterator.
+        match first_err_iter.consume_until_first_err() {
+            Some(e) => Err(e),
+            None => Ok(output),
+        }
+    }
 
     /// Returns the first `Err` item in the current iterator, or an `Ok` value.
     /// If no error is found, this method will consume all items in the current
@@ -342,37 +358,16 @@ pub trait FirstErr<I, T, E> {
     /// assert_eq!(result, Err(1));
     /// # }
     /// ```
-    fn first_err_or<O>(self, value: O) -> Result<O, E>;
-}
-
-impl<I, T, E> FirstErr<I, T, E> for I
-where
-    I: Iterator<Item = Result<T, E>>,
-{
     #[inline]
-    fn first_err_or_else<F, O>(self, f: F) -> Result<O, E>
+    fn first_err_or<O>(self, value: O) -> Result<O, E>
     where
-        F: FnOnce(&mut FirstErrIter<Self, T, E>) -> O,
+        Self: Sized,
     {
-        let mut first_err_iter = FirstErrIter {
-            inner: self,
-            first_err: None,
-        };
-
-        let output = f(&mut first_err_iter);
-
-        // Take the `first_err` back if err exists in whole iterator.
-        match first_err_iter.consume_until_first_err() {
-            Some(e) => Err(e),
-            None => Ok(output),
-        }
-    }
-
-    #[inline]
-    fn first_err_or<O>(self, value: O) -> Result<O, E> {
         self.first_err_or_else(|_| value)
     }
 }
+
+impl<I, T, E> FirstErr<I, T, E> for I where I: Iterator<Item = Result<T, E>> {}
 
 #[cfg(test)]
 mod tests {
@@ -542,5 +537,17 @@ mod tests {
                 Trace::Outer(Err(2))
             ]
         );
+    }
+
+    #[test]
+    fn test_first_err_methods_can_call_through_trait_object() {
+        let mut array_iter = [Ok::<u8, u8>(0), Err(1), Err(2)].into_iter();
+
+        fn take_dyn(iter: &mut dyn Iterator<Item = Result<u8, u8>>) {
+            iter.first_err_or_else(|iter| iter.sum::<u8>()).ok();
+            iter.first_err_or(0).ok();
+        }
+
+        take_dyn(&mut array_iter);
     }
 }
