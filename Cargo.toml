@@ -1,6 +1,6 @@
 [package]
 name = "first-err"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["ikai"]
 description = "Equivalent of iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() ) pattern without allocation."
