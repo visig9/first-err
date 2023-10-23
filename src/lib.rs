@@ -490,9 +490,9 @@ mod tests {
     #[test]
     fn test_first_err_or_else_with_2_layer_data_and_outmost_err_in_layer_1() {
         let ans = [
-            Ok::<Result<u8, u8>, Result<u8, u8>>(Ok::<u8, u8>(0)),
+            Ok::<Result<u8, u8>, u8>(Ok(0)),
             Ok(Err(1)),
-            Err(Ok(2)),
+            Err(2),
             Ok(Ok(3)),
             Ok(Ok(4)),
         ]
@@ -503,13 +503,13 @@ mod tests {
                 .first_err_or_else(|iter2| iter2.sum::<u8>())
         });
 
-        assert_eq!(ans, Err(Ok(2)));
+        assert_eq!(ans, Err(2));
     }
 
     #[test]
     fn test_first_err_or_else_with_2_layer_data_and_outmost_err_in_layer_2() {
         let ans = [
-            Ok::<Result<u8, u8>, Result<u8, u8>>(Ok::<u8, u8>(0)),
+            Ok::<Result<u8, u8>, u8>(Ok(0)),
             Ok(Ok(1)),
             Ok(Err(2)),
             Ok(Err(3)),
@@ -528,12 +528,10 @@ mod tests {
     #[test]
     fn test_first_err_or_else_with_3_layer_data_and_outmost_err_in_layer_2() {
         let ans = [
-            Ok::<Result<Result<u8, u8>, Result<u8, u8>>, Result<Result<u8, u8>, Result<u8, u8>>>(
-                Ok(Ok(0)),
-            ),
+            Ok::<Result<Result<u8, u8>, u8>, u8>(Ok(Ok(0))),
             Ok(Ok(Ok(1))),
             Ok(Ok(Err(2))),
-            Ok(Err(Ok(3))),
+            Ok(Err(3)),
             Ok(Ok(Ok(4))),
         ]
         .into_iter()
@@ -547,7 +545,7 @@ mod tests {
                 })
         });
 
-        assert_eq!(ans, Ok(Err(Ok(3))));
+        assert_eq!(ans, Ok(Err(3)));
     }
 
     #[test]
