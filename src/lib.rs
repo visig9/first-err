@@ -646,4 +646,58 @@ mod tests {
 
         take_dyn(&mut array_iter);
     }
+
+    #[test]
+    fn test_first_err_or_without_err() {
+        let ans = [Ok::<u8, u8>(0), Ok(1), Ok(2), Ok(3), Ok(4)]
+            .into_iter()
+            .first_err_or("no err");
+
+        assert_eq!(ans, Ok("no err"));
+    }
+
+    #[test]
+    fn test_first_err_or_with_err() {
+        let ans = [Ok::<u8, u8>(0), Ok(1), Err(2), Ok(3), Ok(4)]
+            .into_iter()
+            .first_err_or("no err");
+
+        assert_eq!(ans, Err(2));
+    }
+
+    #[test]
+    fn test_first_err_or_try_without_err_and_closure_produce_ok() {
+        let ans = [Ok::<u8, u8>(0), Ok(1), Ok(2), Ok(3), Ok(4)]
+            .into_iter()
+            .first_err_or_try(|iter| iter.nth(1).ok_or(1));
+
+        assert_eq!(ans, Ok(1));
+    }
+
+    #[test]
+    fn test_first_err_or_try_without_err_and_closure_produce_err() {
+        let ans = [Ok::<u8, u8>(0), Ok(1), Ok(2), Ok(3), Ok(4)]
+            .into_iter()
+            .first_err_or_try(|iter| iter.nth(100).ok_or(100));
+
+        assert_eq!(ans, Err(100));
+    }
+
+    #[test]
+    fn test_first_err_or_try_with_err_and_closure_produce_ok() {
+        let ans = [Ok::<u8, u8>(0), Ok(1), Err(2), Ok(3), Ok(4)]
+            .into_iter()
+            .first_err_or_try(|iter| iter.nth(1).ok_or(1));
+
+        assert_eq!(ans, Err(2));
+    }
+
+    #[test]
+    fn test_first_err_or_try_with_err_and_closure_produce_err() {
+        let ans = [Ok::<u8, u8>(0), Ok(1), Err(2), Ok(3), Ok(4)]
+            .into_iter()
+            .first_err_or_try(|iter| iter.nth(100).ok_or(100));
+
+        assert_eq!(ans, Err(2));
+    }
 }
