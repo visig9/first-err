@@ -641,6 +641,7 @@ mod tests {
         fn take_dyn(iter: &mut dyn Iterator<Item = Result<u8, u8>>) {
             iter.first_err_or_else(|iter| iter.sum::<u8>()).ok();
             iter.first_err_or(0).ok();
+            iter.first_err_or_try(|iter| Ok(iter.sum::<u8>())).ok();
         }
 
         take_dyn(&mut array_iter);
