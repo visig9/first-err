@@ -9,12 +9,14 @@
 //! iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() );
 //! ```
 //!
+//! See [`FirstErr`] trait for more detail.
+//!
 //!
 //!
 //! ## Features
 //!
 //! - Find first `Err` in `Iterator<Result<T, E>>` and allow to iterating continuously.
-//! - Speed: Roughly on par with a hand-written loop, using lazy evaluation and without allocation.
+//! - Speed: Roughly on par with a hand-written loop, using lazy evaluation and no allocation.
 //! - Minimized: no `std`, no `alloc`, no dependency.
 //!
 //!
@@ -22,6 +24,7 @@
 //! ## Getting Started
 //!
 //! ```rust
+//! // Use this trait in current scope.
 //! use first_err::FirstErr;
 //!
 //! # fn main() {
@@ -38,8 +41,6 @@
 //! assert_eq!(result, Err(1));
 //! # }
 //! ```
-//!
-//! See [`FirstErr::first_err_or_else()`] for more detail.
 //!
 //!
 //!
@@ -93,8 +94,8 @@
 //! # }
 //! ```
 //!
-//! Using a loop is not bad at all. However, in some situations, maintaining a chainable iterator
-//! is preferable.
+//! Using a loop is not bad at all. However, in some situations, maintaining a chainable
+//! iterator is preferable.
 //!
 //! Furthermore, some scenarios may not be as simple as the previous example. Consider this one:
 //!
@@ -231,14 +232,88 @@ where
 
 impl<I, T, E> FusedIterator for FirstErrIter<I, T, E> where I: Iterator<Item = Result<T, E>> {}
 
-/// This trait provides `first_err_or_else()` method on all `Iterator<Item = Result<T, E>>`.
+/// This trait provides some methods on any `Iterator<Item = Result<T, E>>`, which can take
+/// the first `Err` in iterators, and without allocation.
+///
+///
+///
+/// ## Guarantees
+///
+/// There are some methods in `FirstErr` trait take a closure that accepts an iterator
+/// as its argument. This crate guarantees all those methods have the following properties.
+///
+///
+///
+/// ### Original Iterator is Evaluated Lazily
+///
+/// The `.next()` of the original iterator only be called as late as possible, For example,
+///
+/// ```rust
+/// # use first_err::FirstErr;
+/// # use std::cell::RefCell;
+/// #
+/// # fn main() {
+/// let mut vec = RefCell::new(vec![]);
+///
+/// let mut result = [Ok::<u8, u8>(0), Ok(1), Err(2), Ok(3)]
+///     .into_iter()
+///     .inspect(|res| { vec.borrow_mut().push(*res) })         // push value from outer
+///     .first_err_or_else(|iter| {
+///         iter
+///             .inspect(|n| { vec.borrow_mut().push(Ok(42)) }) // push value from inner
+///             .sum::<u8>()
+///     });
+///
+/// assert_eq!(result, Err(2));
+/// assert_eq!(
+///     vec.into_inner(),
+///     vec![Ok(0), Ok(42), Ok(1), Ok(42), Err(2)],
+/// );
+/// # }
+/// ```
+///
+///
+///
+/// ### No Need to Manually Consume the Closure's Iterator
+///
+/// User can simple ignore the iterator in closure partially of fully, and still can get
+/// the correct result.
+///
+/// ```rust
+/// # use first_err::FirstErr;
+/// #
+/// # fn main() {
+/// let result = [Ok::<u8, u8>(0), Err(1), Err(2)]
+///     .into_iter()
+///     .first_err_or_else(|_iter| {}); // not need to consume `_iter` iterator,
+/// assert_eq!(result, Err(1));         // and the result still correct.
+/// # }
+/// ```
+///
+///
+///
+/// ### Iterator in Closure Can't be Leaked Out of Closure Scope
+///
+/// Let the iterator in closure escaped from the closure is a compiler error.
+///
+/// ```rust,compile_fail
+/// # use first_err::FirstErr;
+/// #
+/// # fn main() {
+/// let iter = [Ok::<u8, u8>(0), Err(1), Err(2)]
+///     .into_iter()
+///     .first_err_or_else(|iter| iter); // compile error: can't leak `iter` out
+/// # }
+/// ```
 pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
     /// Returns the first `Err` item in the current iterator, or an `Ok` value produced by the
-    /// `f` closure. If no error is found, this method will consume all items in the current
-    /// iterator before returning.
+    /// `f` closure.
     ///
-    /// The argument iterator of closure will produce the same values in `Ok` sequence of
-    /// current iterator, but will stop when encounter the first `Err` item.
+    /// If no error is found, this method will consume all items in the original iterator
+    /// before returning. The argument iterator of the `f` closure will producing the same
+    /// values in `Ok` sequence, but will stop when encounter the first `Err` item.
+    ///
+    ///
     ///
     /// # Examples
     ///
@@ -257,59 +332,6 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
     ///     .into_iter()
     ///     .first_err_or_else(|iter| iter.sum::<u8>());
     /// assert_eq!(result, Err(1));
-    /// # }
-    /// ```
-    ///
-    /// # Guarantees
-    ///
-    /// ## No Need to Manually Consume the Inner Iterator
-    ///
-    /// ```rust
-    /// # use first_err::FirstErr;
-    /// #
-    /// # fn main() {
-    /// let result = [Ok::<u8, u8>(0), Err(1), Err(2)]
-    ///     .into_iter()
-    ///     .first_err_or_else(|_iter| {}); // not need to consume `_iter` iterator,
-    /// assert_eq!(result, Err(1));         // and the result still correct.
-    /// # }
-    /// ```
-    ///
-    /// ## Outer Iterator is Evaluated Lazily
-    ///
-    /// ```rust
-    /// # use first_err::FirstErr;
-    /// # use std::cell::RefCell;
-    /// #
-    /// # fn main() {
-    /// let mut vec = RefCell::new(vec![]);
-    ///
-    /// let mut result = [Ok::<u8, u8>(0), Ok(1), Err(2), Ok(3)]
-    ///     .into_iter()
-    ///     .inspect(|res| { vec.borrow_mut().push(*res) })         // push value from outer
-    ///     .first_err_or_else(|iter| {
-    ///         iter
-    ///             .inspect(|n| { vec.borrow_mut().push(Ok(42)) }) // push value from inner
-    ///             .sum::<u8>()
-    ///     });
-    ///
-    /// assert_eq!(result, Err(2));
-    /// assert_eq!(
-    ///     vec.into_inner(),
-    ///     vec![Ok(0), Ok(42), Ok(1), Ok(42), Err(2)],
-    /// );
-    /// # }
-    /// ```
-    ///
-    /// ## Inner Iterator Can't be Leaked Outside the Closure
-    ///
-    /// ```rust,compile_fail
-    /// # use first_err::FirstErr;
-    /// #
-    /// # fn main() {
-    /// let iter = [Ok::<u8, u8>(0), Err(1), Err(2)]
-    ///     .into_iter()
-    ///     .first_err_or_else(|iter| iter); // compile error: can't leak `iter` out
     /// # }
     /// ```
     #[inline]
@@ -332,12 +354,86 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
         }
     }
 
-    /// Returns the first `Err` item in the current iterator, or an `Ok` value.
-    /// If no error is found, this method will consume all items in the current
-    /// iterator before returning.
+    /// Returns the first `Err` item in the current iterator, or an `Result` value produced
+    /// by the `f` closure.
     ///
-    /// This method is a shorter version of
-    /// [`first_err_or_else(|_| value)`](Self::first_err_or_else).
+    /// If no error is found, this method will consume all items in the original iterator
+    /// before returning. The argument iterator of the `f` closure will producing the same
+    /// values in `Ok` sequence, but will stop when encounter the first `Err` item.
+    ///
+    ///
+    ///
+    /// # Examples
+    ///
+    /// Basic concept:
+    ///
+    /// ```rust
+    /// use first_err::FirstErr;
+    ///
+    /// # fn main() {
+    /// // Everything is Ok.
+    /// let result = [Ok::<u8, u8>(0), Ok(1), Ok(2)]
+    ///     .into_iter()
+    ///     .first_err_or_try(|_| Ok("ok"));
+    /// assert_eq!(result, Ok("ok"));
+    ///
+    /// // When closure returns Err.
+    /// let result = [Ok::<u8, u8>(0), Ok(1), Ok(2)]
+    ///     .into_iter()
+    ///     .first_err_or_try(|_| Err::<u8, u8>(42));
+    /// assert_eq!(result, Err(42));
+    ///
+    /// // When outer iterator contains Err.
+    /// let result = [Ok::<u8, u8>(0), Err(2), Ok(2)]
+    ///     .into_iter()
+    ///     .first_err_or_try(|_| Ok("ok"));
+    /// assert_eq!(result, Err(2));
+    ///
+    /// // When both contains Err.
+    /// let result = [Ok::<u8, u8>(0), Err(2), Ok(2)]
+    ///     .into_iter()
+    ///     .first_err_or_try(|_| Err::<u8, u8>(42));
+    /// assert_eq!(result, Err(2));
+    /// # }
+    /// ```
+    ///
+    /// Use the `iter` argument of the `f` closure:
+    ///
+    /// ```rust
+    /// # use first_err::FirstErr;
+    /// #
+    /// # fn main() {
+    /// let admin_id: u32 = 1;
+    /// let user_ids_in_conf = ["32", "5", "8", "19"];
+    ///
+    /// let admin_index = user_ids_in_conf
+    ///     .into_iter()
+    ///     .map(|s| s.parse::<u32>().map_err(|_| "user id parsing failed"))
+    ///     .first_err_or_try(|user_ids_iter| {
+    ///         user_ids_iter
+    ///             .position(|user_id| user_id == admin_id)
+    ///             .ok_or_else(|| "admin not in the user list")
+    ///     });
+    ///
+    /// assert_eq!(admin_index, Err("admin not in the user list"));
+    /// # }
+    /// ```
+    #[inline]
+    fn first_err_or_try<F, O>(self, f: F) -> Result<O, E>
+    where
+        F: FnOnce(&mut FirstErrIter<Self, T, E>) -> Result<O, E>,
+        Self: Sized,
+    {
+        self.first_err_or_else(f).and_then(|res| res)
+    }
+
+    /// Returns the first `Err` item in the current iterator, or an `Ok(value)`.
+    ///
+    /// If no error is found, this method will consume all items in the original iterator
+    /// before returning. The argument iterator of the `f` closure will producing the same
+    /// values in `Ok` sequence, but will stop when encounter the first `Err` item.
+    ///
+    ///
     ///
     /// # Examples
     ///
@@ -466,6 +562,7 @@ mod tests {
     /// In most cases, API users should not be concerned about how many times the original
     /// iterator's `.next()` method is called, as it gets consumed after `first_err_or_else()`
     /// is called.
+    ///
     /// However, if the inner iterator has some side-effect, this behavior is still
     /// observable, and users may rely on it.
     ///
