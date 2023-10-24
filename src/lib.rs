@@ -192,6 +192,7 @@ impl<I, T, E> FirstErrIter<I, T, E>
 where
     I: Iterator<Item = Result<T, E>>,
 {
+    #[inline]
     fn consume_until_first_err(mut self) -> Option<E> {
         if self.first_err.is_none() {
             // try to found an error, or just run through the whole iterator.
