@@ -1,3 +1,4 @@
+use core::iter::FusedIterator;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use first_err::FirstErr;
 
@@ -32,6 +33,8 @@ mod l1 {
             }
         }
     }
+
+    impl FusedIterator for L1Iter {}
 
     /// first_err algorithm.
     fn first_err_approach(iter: impl Iterator<Item = Result<u32, u32>>) -> Result<u32, u32> {
@@ -164,6 +167,8 @@ mod l2 {
         }
     }
 
+    impl FusedIterator for L2Iter {}
+
     /// first_err algorithm.
     fn first_err_approach(
         iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
@@ -179,14 +184,13 @@ mod l2 {
         let mut sum = 0;
         let mut inner_first_err: Option<u32> = None;
 
-        while let Some(outer_res) = iter.next() {
+        for outer_res in iter {
             let inner_res = outer_res?; // return immediately when outer hit a `Err`.
 
             // if inner_first_err already exists, we don't care anything further, just verify
             // all outer_res ASAP.
             if inner_first_err.is_some() {
-                // break to avoid `inner_first_err.is_some()` check in loop
-                break;
+                continue;
             }
 
             match inner_res {
@@ -200,11 +204,6 @@ mod l2 {
                     inner_first_err = Some(e);
                 }
             }
-        }
-
-        // only check outer_res due to previous break;
-        for outer_res in iter {
-            let _ = outer_res?;
         }
 
         // At this point, we're known no outer `Err` in iter.
@@ -318,6 +317,26 @@ fn benchmarks(c: &mut Criterion) {
     l2::bench_setup(c, Some(10000), Some(1000));
     l2::bench_setup(c, Some(99999), Some(1000));
     l2::bench_setup(c, Some(100000), Some(1000));
+
+    l2::bench_setup(c, Some(1000), Some(0));
+    l2::bench_setup(c, Some(1000), Some(1));
+    l2::bench_setup(c, Some(1000), Some(10));
+    l2::bench_setup(c, Some(1000), Some(100));
+    l2::bench_setup(c, Some(1000), Some(1000));
+    l2::bench_setup(c, Some(1000), Some(10000));
+    l2::bench_setup(c, Some(1000), Some(99999));
+    l2::bench_setup(c, Some(1000), Some(100000));
+    l2::bench_setup(c, Some(1000), None);
+
+    l2::bench_setup(c, Some(0), None);
+    l2::bench_setup(c, Some(1), None);
+    l2::bench_setup(c, Some(10), None);
+    l2::bench_setup(c, Some(100), None);
+    l2::bench_setup(c, Some(1000), None);
+    l2::bench_setup(c, Some(10000), None);
+    l2::bench_setup(c, Some(99999), None);
+    l2::bench_setup(c, Some(100000), None);
+
     l2::bench_setup(c, None, Some(0));
     l2::bench_setup(c, None, Some(1));
     l2::bench_setup(c, None, Some(10));
@@ -326,7 +345,6 @@ fn benchmarks(c: &mut Criterion) {
     l2::bench_setup(c, None, Some(10000));
     l2::bench_setup(c, None, Some(99999));
     l2::bench_setup(c, None, Some(100000));
-    l2::bench_setup(c, None, None);
 }
 
 criterion_group!(benches, benchmarks);

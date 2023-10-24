@@ -182,7 +182,15 @@ where
     I: Iterator<Item = Result<T, E>>,
 {
     /// Internal iterator.
-    inner: I,
+    ///
+    /// `None` if:
+    ///
+    /// 1. first_err found. or
+    /// 2. inner iterator .next() return first `None` (fused)
+    ///
+    /// This data structure is designed for enhance performance because only one check
+    /// can make sure two things in hot loop.
+    inner: Option<I>,
 
     /// The first `Err` when iterating `inner`.
     first_err: Option<E>,
@@ -193,11 +201,17 @@ where
     I: Iterator<Item = Result<T, E>>,
 {
     #[inline]
-    fn consume_until_first_err(mut self) -> Option<E> {
-        if self.first_err.is_none() {
-            // try to found an error, or just run through the whole iterator.
-            for _ in &mut self {}
+    fn new(inner: I) -> Self {
+        Self {
+            inner: Some(inner),
+            first_err: None,
         }
+    }
+
+    #[inline]
+    fn consume_until_first_err(mut self) -> Option<E> {
+        // try to found an error, or just run through the whole iterator.
+        for _ in &mut self {}
 
         self.first_err.take()
     }
@@ -211,22 +225,22 @@ where
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.first_err.is_some() {
-            return None;
-        }
-
-        match self.inner.next() {
+        match self.inner.as_mut()?.next() {
             // ok value
             Some(Ok(t)) => Some(t),
 
             // find first Err
             Some(Err(e)) => {
                 self.first_err = Some(e);
+                self.inner = None;
                 None
             }
 
             // exhausted
-            None => None,
+            None => {
+                self.inner = None;
+                None
+            }
         }
     }
 }
@@ -341,10 +355,7 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
         F: FnOnce(&mut FirstErrIter<Self, T, E>) -> O,
         Self: Sized,
     {
-        let mut first_err_iter = FirstErrIter {
-            inner: self,
-            first_err: None,
-        };
+        let mut first_err_iter = FirstErrIter::new(self);
 
         let output = f(&mut first_err_iter);
 
@@ -633,6 +644,39 @@ mod tests {
                 Trace::Outer(Err(2))
             ]
         );
+    }
+
+    #[test]
+    fn test_first_err_or_else_with_non_fused_iterator() {
+        struct NonFusedIter {
+            curr: u32,
+        }
+
+        impl NonFusedIter {
+            fn new() -> Self {
+                Self { curr: 0 }
+            }
+        }
+
+        impl Iterator for NonFusedIter {
+            type Item = Result<u32, u32>;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let tmp = self.curr;
+                self.curr += 1;
+
+                match tmp % 3 {
+                    0 => Some(Ok(tmp)),
+                    1 => None,
+                    2 => Some(Err(tmp)),
+                    _ => unreachable!(),
+                }
+            }
+        }
+
+        let ans = NonFusedIter::new().first_err_or_else(|iter| iter.sum::<u32>());
+
+        assert_eq!(ans, Ok(0));
     }
 
     #[test]
