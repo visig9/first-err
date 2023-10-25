@@ -178,19 +178,13 @@ mod l2 {
 
     /// first_err algorithm implemented by loop.
     fn loop_approach(
-        iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
+        mut iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
     ) -> Result<u32, u32> {
         let mut sum = 0;
         let mut inner_first_err: Option<u32> = None;
 
-        for outer_res in iter {
+        while let Some(outer_res) = iter.next() {
             let inner_res = outer_res?; // return immediately when outer hit a `Err`.
-
-            // if inner_first_err already exists, we don't care anything further, just verify
-            // all outer_res ASAP.
-            if inner_first_err.is_some() {
-                continue;
-            }
 
             match inner_res {
                 // no `Err` found for now (both inner and outer layer)
@@ -201,6 +195,14 @@ mod l2 {
                 // this is inner's first `Err`.
                 Err(e) => {
                     inner_first_err = Some(e);
+
+                    // if inner_first_err already exists, we don't care anything further,
+                    // just verify all outer_res ASAP.
+                    for outer_res in iter {
+                        let _ = outer_res?;
+                    }
+
+                    break;
                 }
             }
         }
