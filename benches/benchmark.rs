@@ -66,8 +66,8 @@ mod l1 {
         let length: usize = 100_000;
 
         let group_name = match err_at {
-            Some(err_at) => format!("bench_{length}_err_at_{err_at:_<7}"),
-            None => format!("bench_{length}_err_not_exists"),
+            Some(err_at) => format!("l1::err_at_{err_at:_<7}"),
+            None => format!("l1::err_not_exists"),
         };
 
         // TEST: make sure answers are the same.
@@ -96,22 +96,21 @@ mod l1 {
 
             group.bench_function("__collect", |b| {
                 b.iter(|| {
-                    let input = black_box(L1Iter::new(err_at).take(length));
-                    black_box(collect_approach(input))
+                    black_box(collect_approach(black_box(
+                        L1Iter::new(err_at).take(length),
+                    )))
                 })
             });
 
             group.bench_function("_____loop", |b| {
-                b.iter(|| {
-                    let input = black_box(L1Iter::new(err_at).take(length));
-                    black_box(loop_approach(input))
-                })
+                b.iter(|| black_box(loop_approach(black_box(L1Iter::new(err_at).take(length)))))
             });
 
             group.bench_function("first_err", |b| {
                 b.iter(|| {
-                    let input = black_box(L1Iter::new(err_at).take(length));
-                    black_box(first_err_approach(input))
+                    black_box(first_err_approach(black_box(
+                        L1Iter::new(err_at).take(length),
+                    )))
                 })
             });
 
@@ -179,7 +178,7 @@ mod l2 {
 
     /// first_err algorithm implemented by loop.
     fn loop_approach(
-        mut iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
+        iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
     ) -> Result<u32, u32> {
         let mut sum = 0;
         let mut inner_first_err: Option<u32> = None;
@@ -235,15 +234,15 @@ mod l2 {
 
         let group_name = match (l1_err_at, l2_err_at) {
             (Some(l1_err_at), Some(l2_err_at)) => {
-                format!("bench_{length}_l1_err_at_{l1_err_at:_<7}_l2_err_at_{l2_err_at:_<7}")
+                format!("l2::l1_err_at_{l1_err_at:_<7}_l2_err_at_{l2_err_at:_<7}")
             }
             (Some(l1_err_at), None) => {
-                format!("bench_{length}_l1_err_at_{l1_err_at:_<7}_l2_err_at_none___")
+                format!("l2::l1_err_at_{l1_err_at:_<7}_l2_err_not_exists")
             }
             (None, Some(l2_err_at)) => {
-                format!("bench_{length}_l1_err_at_none____l2_err_at_{l2_err_at:_<7}")
+                format!("l2::l1_err_not_exists_l2_err_at_{l2_err_at:_<7}")
             }
-            (None, None) => format!("bench_{length}_err_not_exists_____________________"),
+            (None, None) => format!("l2::l1_err_not_exists_l2_err_not_exists"),
         };
 
         // TEST: make sure answers are the same.
@@ -274,22 +273,25 @@ mod l2 {
 
             group.bench_function("__collect", |b| {
                 b.iter(|| {
-                    let input = black_box(L2Iter::new(l1_err_at, l2_err_at).take(length));
-                    black_box(collect_approach(input))
+                    black_box(collect_approach(black_box(
+                        L2Iter::new(l1_err_at, l2_err_at).take(length),
+                    )))
                 })
             });
 
             group.bench_function("_____loop", |b| {
                 b.iter(|| {
-                    let input = black_box(L2Iter::new(l1_err_at, l2_err_at).take(length));
-                    black_box(loop_approach(input))
+                    black_box(loop_approach(black_box(
+                        L2Iter::new(l1_err_at, l2_err_at).take(length),
+                    )))
                 })
             });
 
             group.bench_function("first_err", |b| {
                 b.iter(|| {
-                    let input = black_box(L2Iter::new(l1_err_at, l2_err_at).take(length));
-                    black_box(first_err_approach(input))
+                    black_box(first_err_approach(black_box(
+                        L2Iter::new(l1_err_at, l2_err_at).take(length),
+                    )))
                 })
             });
 

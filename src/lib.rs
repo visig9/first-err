@@ -210,7 +210,7 @@ where
 
     #[inline]
     fn consume_until_first_err(mut self) -> Option<E> {
-        // try to found an error, or just run through the whole iterator.
+        // stop when first_err is found, or run through the whole iterator.
         for _ in &mut self {}
 
         self.first_err.take()
