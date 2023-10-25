@@ -302,51 +302,44 @@ mod l2 {
 
 fn benchmarks(c: &mut Criterion) {
     l1::bench_setup(c, Some(0));
-    l1::bench_setup(c, Some(1));
     l1::bench_setup(c, Some(10));
     l1::bench_setup(c, Some(100));
     l1::bench_setup(c, Some(1000));
     l1::bench_setup(c, Some(10000));
     l1::bench_setup(c, Some(99999));
-    l1::bench_setup(c, Some(100000));
     l1::bench_setup(c, None);
 
     l2::bench_setup(c, Some(0), Some(1000));
-    l2::bench_setup(c, Some(1), Some(1000));
     l2::bench_setup(c, Some(10), Some(1000));
     l2::bench_setup(c, Some(100), Some(1000));
     l2::bench_setup(c, Some(1000), Some(1000));
     l2::bench_setup(c, Some(10000), Some(1000));
     l2::bench_setup(c, Some(99999), Some(1000));
-    l2::bench_setup(c, Some(100000), Some(1000));
+    l2::bench_setup(c, None, Some(1000));
 
     l2::bench_setup(c, Some(1000), Some(0));
-    l2::bench_setup(c, Some(1000), Some(1));
     l2::bench_setup(c, Some(1000), Some(10));
     l2::bench_setup(c, Some(1000), Some(100));
     l2::bench_setup(c, Some(1000), Some(1000));
     l2::bench_setup(c, Some(1000), Some(10000));
     l2::bench_setup(c, Some(1000), Some(99999));
-    l2::bench_setup(c, Some(1000), Some(100000));
     l2::bench_setup(c, Some(1000), None);
-
-    l2::bench_setup(c, Some(0), None);
-    l2::bench_setup(c, Some(1), None);
-    l2::bench_setup(c, Some(10), None);
-    l2::bench_setup(c, Some(100), None);
-    l2::bench_setup(c, Some(1000), None);
-    l2::bench_setup(c, Some(10000), None);
-    l2::bench_setup(c, Some(99999), None);
-    l2::bench_setup(c, Some(100000), None);
 
     l2::bench_setup(c, None, Some(0));
-    l2::bench_setup(c, None, Some(1));
     l2::bench_setup(c, None, Some(10));
     l2::bench_setup(c, None, Some(100));
     l2::bench_setup(c, None, Some(1000));
     l2::bench_setup(c, None, Some(10000));
     l2::bench_setup(c, None, Some(99999));
-    l2::bench_setup(c, None, Some(100000));
+
+    l2::bench_setup(c, Some(0), None);
+    l2::bench_setup(c, Some(10), None);
+    l2::bench_setup(c, Some(100), None);
+    l2::bench_setup(c, Some(1000), None);
+    l2::bench_setup(c, Some(10000), None);
+    l2::bench_setup(c, Some(99999), None);
+
+    l2::bench_setup(c, None, None);
 }
 
 criterion_group!(benches, benchmarks);
