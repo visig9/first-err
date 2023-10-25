@@ -1,5 +1,5 @@
-use core::iter::FusedIterator;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use core::{hint::black_box, iter::FusedIterator};
+use criterion::{criterion_group, criterion_main, Criterion};
 use first_err::FirstErr;
 
 mod l1 {
