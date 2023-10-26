@@ -182,18 +182,12 @@ where
     I: Iterator<Item = Result<T, E>>,
 {
     /// Internal iterator.
-    ///
-    /// `None` if:
-    ///
-    /// 1. first_err found. or
-    /// 2. inner iterator .next() return first `None` (fused)
-    ///
-    /// This data structure is designed for enhance performance because only one check
-    /// can make sure two things in hot loop.
-    inner: Option<I>,
+    inner: I,
 
     /// The first `Err` when iterating `inner`.
     first_err: Option<E>,
+
+    is_first_err_found_or_exhausted: bool,
 }
 
 impl<I, T, E> FirstErrIter<I, T, E>
@@ -203,15 +197,21 @@ where
     #[inline]
     fn new(inner: I) -> Self {
         Self {
-            inner: Some(inner),
+            inner,
             first_err: None,
+            is_first_err_found_or_exhausted: false,
         }
     }
 
     #[inline]
     fn consume_until_first_err(mut self) -> Option<E> {
-        // stop when first_err is found, or run through the whole iterator.
-        for _ in &mut self {}
+        if !self.is_first_err_found_or_exhausted {
+            for res in &mut self.inner {
+                if let Err(e) = res {
+                    return Some(e);
+                }
+            }
+        }
 
         self.first_err.take()
     }
@@ -225,20 +225,24 @@ where
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        match self.inner.as_mut()?.next() {
+        if self.is_first_err_found_or_exhausted {
+            return None;
+        }
+
+        match self.inner.next() {
             // ok value
             Some(Ok(t)) => Some(t),
 
             // find first Err
             Some(Err(e)) => {
                 self.first_err = Some(e);
-                self.inner = None;
+                self.is_first_err_found_or_exhausted = true;
                 None
             }
 
             // exhausted
             None => {
-                self.inner = None;
+                self.is_first_err_found_or_exhausted = true;
                 None
             }
         }
