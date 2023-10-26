@@ -173,6 +173,17 @@
 
 use core::iter::FusedIterator;
 
+/// Internal state of [`FirstErrIter`].
+#[derive(Debug)]
+enum State<I, T, E>
+where
+    I: Iterator<Item = Result<T, E>>,
+{
+    Active(I),
+    FoundFirstErr(E),
+    Exhausted,
+}
+
 /// Iterator can take first error from inner iterator.
 ///
 /// See [`FirstErr::first_err_or_else()`] for more details.
@@ -181,41 +192,21 @@ pub struct FirstErrIter<I, T, E>
 where
     I: Iterator<Item = Result<T, E>>,
 {
-    /// Internal iterator.
-    inner: I,
-
-    /// The first `Err` when iterating `inner`.
-    first_err: Option<E>,
-
-    is_first_err_found_or_exhausted: bool,
+    state: State<I, T, E>,
 }
 
 impl<I, T, E> FirstErrIter<I, T, E>
 where
     I: Iterator<Item = Result<T, E>>,
 {
-    #[inline]
     fn new(inner: I) -> Self {
         Self {
-            inner,
-            first_err: None,
-            is_first_err_found_or_exhausted: false,
+            state: State::Active(inner),
         }
-    }
-
-    #[inline]
-    fn consume_until_first_err(mut self) -> Option<E> {
-        if !self.is_first_err_found_or_exhausted {
-            for res in &mut self.inner {
-                if let Err(e) = res {
-                    return Some(e);
-                }
-            }
-        }
-
-        self.first_err.take()
     }
 }
+
+impl<I, T, E> FusedIterator for FirstErrIter<I, T, E> where I: Iterator<Item = Result<T, E>> {}
 
 impl<I, T, E> Iterator for FirstErrIter<I, T, E>
 where
@@ -225,31 +216,23 @@ where
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.is_first_err_found_or_exhausted {
-            return None;
-        }
-
-        match self.inner.next() {
-            // ok value
-            Some(Ok(t)) => Some(t),
-
-            // find first Err
-            Some(Err(e)) => {
-                self.first_err = Some(e);
-                self.is_first_err_found_or_exhausted = true;
-                None
-            }
-
-            // exhausted
-            None => {
-                self.is_first_err_found_or_exhausted = true;
-                None
-            }
+        match &mut self.state {
+            State::Active(inner) => match inner.next() {
+                Some(Ok(t)) => Some(t),
+                Some(Err(e)) => {
+                    self.state = State::FoundFirstErr(e);
+                    None
+                }
+                None => {
+                    self.state = State::Exhausted;
+                    None
+                }
+            },
+            State::FoundFirstErr(_) => None,
+            State::Exhausted => None,
         }
     }
 }
-
-impl<I, T, E> FusedIterator for FirstErrIter<I, T, E> where I: Iterator<Item = Result<T, E>> {}
 
 /// This trait provides some methods on any `Iterator<Item = Result<T, E>>`, which can take
 /// the first `Err` in iterators, and without allocation.
@@ -364,9 +347,16 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
         let output = f(&mut first_err_iter);
 
         // Take the `first_err` back if err exists in whole iterator.
-        match first_err_iter.consume_until_first_err() {
-            Some(e) => Err(e),
-            None => Ok(output),
+        match first_err_iter.state {
+            // run the whole iterator out.
+            State::Active(inner) => {
+                for res in inner {
+                    res?;
+                }
+                Ok(output)
+            }
+            State::Exhausted => Ok(output),
+            State::FoundFirstErr(e) => Err(e),
         }
     }
 
