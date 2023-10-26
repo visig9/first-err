@@ -26,11 +26,14 @@ mod l1 {
             let tmp = self.curr;
             self.curr += 1;
 
-            if Some(tmp) != self.err_at {
+            let res = if Some(tmp) != self.err_at {
                 Some(Ok(tmp))
             } else {
                 Some(Err(tmp))
-            }
+            };
+
+            // treat output of this iterator is a black box
+            black_box(res)
         }
     }
 
@@ -162,7 +165,8 @@ mod l2 {
                 Some(Err(tmp))
             };
 
-            l1_res
+            // treat output of this iterator is a black box
+            black_box(l1_res)
         }
     }
 
