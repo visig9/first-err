@@ -346,9 +346,9 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
 
         let output = f(&mut first_err_iter);
 
-        // Take the `first_err` back if err exists in whole iterator.
         match first_err_iter.state {
-            // run the whole iterator out.
+            // when iterator still active, consume the whole iterator until
+            // the first err be found.
             State::Active(inner) => {
                 for res in inner {
                     res?;
