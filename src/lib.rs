@@ -325,7 +325,7 @@ where
 ///     .first_err_or_else(|iter| iter); // compile error: can't leak `iter` out
 /// # }
 /// ```
-pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
+pub trait FirstErr {
     /// Returns the first `Err` item in the current iterator, or an `Ok` value produced by the
     /// `f` closure.
     ///
@@ -355,10 +355,10 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
     /// # }
     /// ```
     #[inline]
-    fn first_err_or_else<F, O>(self, f: F) -> Result<O, E>
+    fn first_err_or_else<T, E, O, F>(self, f: F) -> Result<O, E>
     where
         F: FnOnce(&mut FirstErrIter<Self, T, E>) -> O,
-        Self: Sized,
+        Self: Iterator<Item = Result<T, E>> + Sized,
     {
         let mut first_err_iter = FirstErrIter::new(self);
 
@@ -435,10 +435,10 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
     /// # }
     /// ```
     #[inline]
-    fn first_err_or_try<F, O>(self, f: F) -> Result<O, E>
+    fn first_err_or_try<T, E, O, F>(self, f: F) -> Result<O, E>
     where
         F: FnOnce(&mut FirstErrIter<Self, T, E>) -> Result<O, E>,
-        Self: Sized,
+        Self: Iterator<Item = Result<T, E>> + Sized,
     {
         self.first_err_or_else(f).and_then(|res| res)
     }
@@ -471,15 +471,15 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
     /// # }
     /// ```
     #[inline]
-    fn first_err_or<O>(self, value: O) -> Result<O, E>
+    fn first_err_or<T, E, O>(self, value: O) -> Result<O, E>
     where
-        Self: Sized,
+        Self: Iterator<Item = Result<T, E>> + Sized,
     {
         self.first_err_or_else(|_| value)
     }
 }
 
-impl<I, T, E> FirstErr<I, T, E> for I where I: Iterator<Item = Result<T, E>> {}
+impl<I, T, E> FirstErr for I where I: Iterator<Item = Result<T, E>> {}
 
 #[cfg(test)]
 mod tests {
