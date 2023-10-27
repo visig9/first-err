@@ -18,18 +18,18 @@ mod l1 {
 
     /// One layer iterator.
     struct L1Iter {
-        curr: u32,
-        err_at: Option<u32>,
+        curr: u64,
+        err_at: Option<u64>,
     }
 
     impl L1Iter {
-        fn new(err_at: Option<u32>) -> Self {
+        fn new(err_at: Option<u64>) -> Self {
             Self { curr: 0, err_at }
         }
     }
 
     impl Iterator for L1Iter {
-        type Item = Result<u32, u32>;
+        type Item = Result<u64, u64>;
 
         fn next(&mut self) -> Option<Self::Item> {
             let tmp = self.curr;
@@ -50,34 +50,34 @@ mod l1 {
 
     /// The code implemented by first_err.
     #[inline(never)]
-    fn first_err_approach(iter: impl Iterator<Item = Result<u32, u32>>) -> Result<u32, u32> {
-        iter.first_err_or_else(|iter1| iter1.sum::<u32>())
+    fn first_err_approach(iter: impl Iterator<Item = Result<u64, u64>>) -> Result<u64, u64> {
+        iter.first_err_or_else(|iter1| iter1.sum::<u64>())
     }
 
     /// The code implemented by loop.
     #[inline(never)]
-    fn loop_approach(iter: impl Iterator<Item = Result<u32, u32>>) -> Result<u32, u32> {
+    fn loop_approach(iter: impl Iterator<Item = Result<u64, u64>>) -> Result<u64, u64> {
         let mut sum = 0;
         for res in iter {
             sum += res?;
         }
 
-        Ok::<u32, u32>(sum)
+        Ok::<u64, u64>(sum)
     }
 
     /// The code implemented by `collect()`.
     #[inline(never)]
-    fn collect_approach(iter: impl Iterator<Item = Result<u32, u32>>) -> Result<u32, u32> {
+    fn collect_approach(iter: impl Iterator<Item = Result<u64, u64>>) -> Result<u64, u64> {
         let sum = iter
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
-            .sum::<u32>();
+            .sum::<u64>();
 
         Ok(sum)
     }
 
     /// Set L1 benchmark group by given arguments.
-    pub fn bench_setup(c: &mut Criterion, err_at: Option<u32>) {
+    pub fn bench_setup(c: &mut Criterion, err_at: Option<u64>) {
         let length: usize = 100_000;
 
         let group_name = match err_at {
@@ -141,13 +141,13 @@ mod l2 {
 
     /// Two layer iterator.
     struct L2Iter {
-        curr: u32,
-        l1_err_at: Option<u32>,
-        l2_err_at: Option<u32>,
+        curr: u64,
+        l1_err_at: Option<u64>,
+        l2_err_at: Option<u64>,
     }
 
     impl L2Iter {
-        fn new(l1_err_at: Option<u32>, l2_err_at: Option<u32>) -> Self {
+        fn new(l1_err_at: Option<u64>, l2_err_at: Option<u64>) -> Self {
             Self {
                 curr: 0,
                 l1_err_at,
@@ -157,20 +157,20 @@ mod l2 {
     }
 
     impl Iterator for L2Iter {
-        type Item = Result<Result<u32, u32>, u32>;
+        type Item = Result<Result<u64, u64>, u64>;
 
         fn next(&mut self) -> Option<Self::Item> {
             let tmp = self.curr;
             self.curr += 1;
 
-            // build inner Result<u32, u32>.
+            // build inner Result<u64, u64>.
             let l2_res = if Some(tmp) != self.l2_err_at {
                 Ok(tmp)
             } else {
                 Err(tmp)
             };
 
-            // build outer Result<Result<u32, u32>, u32>.
+            // build outer Result<Result<u64, u64>, u64>.
             let l1_res = if Some(tmp) != self.l1_err_at {
                 Some(Ok(l2_res))
             } else {
@@ -187,19 +187,19 @@ mod l2 {
     /// The code implemented by first_err.
     #[inline(never)]
     fn first_err_approach(
-        iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
-    ) -> Result<u32, u32> {
-        iter.first_err_or_else(|iter1| iter1.first_err_or_else(|iter2| iter2.sum::<u32>()))
+        iter: impl Iterator<Item = Result<Result<u64, u64>, u64>>,
+    ) -> Result<u64, u64> {
+        iter.first_err_or_else(|iter1| iter1.first_err_or_else(|iter2| iter2.sum::<u64>()))
             .and_then(|res| res)
     }
 
     /// The code implemented by loop.
     #[inline(never)]
     fn loop_approach(
-        mut iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
-    ) -> Result<u32, u32> {
+        mut iter: impl Iterator<Item = Result<Result<u64, u64>, u64>>,
+    ) -> Result<u64, u64> {
         let mut sum = 0;
-        let mut inner_first_err: Option<u32> = None;
+        let mut inner_first_err: Option<u64> = None;
 
         while let Some(outer_res) = iter.next() {
             let inner_res = outer_res?; // return immediately when outer hit a `Err`.
@@ -231,26 +231,26 @@ mod l2 {
         }
 
         // no any `Err` (both inner and outer).
-        Ok::<u32, u32>(sum)
+        Ok::<u64, u64>(sum)
     }
 
     /// The code implemented by `collect()`.
     #[inline(never)]
     fn collect_approach(
-        iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
-    ) -> Result<u32, u32> {
+        iter: impl Iterator<Item = Result<Result<u64, u64>, u64>>,
+    ) -> Result<u64, u64> {
         let sum = iter
-            .collect::<Result<Vec<Result<u32, u32>>, u32>>()?
+            .collect::<Result<Vec<Result<u64, u64>>, u64>>()?
             .into_iter()
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
-            .sum::<u32>();
+            .sum::<u64>();
 
-        Ok::<u32, u32>(sum)
+        Ok::<u64, u64>(sum)
     }
 
     /// Set L2 benchmark group by given arguments.
-    pub fn bench_setup(c: &mut Criterion, l1_err_at: Option<u32>, l2_err_at: Option<u32>) {
+    pub fn bench_setup(c: &mut Criterion, l1_err_at: Option<u64>, l2_err_at: Option<u64>) {
         let length: usize = 100_000;
 
         let group_name = match (l1_err_at, l2_err_at) {
