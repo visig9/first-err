@@ -1,3 +1,12 @@
+//! Benchmark the methods of `first-err`.
+//!
+//! What's the things should take into account:
+//!
+//! 1. Verify the performances of a series of functions with same algorithm which
+//!    implemented by `first_err`, `loop` and `collect` approachs.
+//! 2. Do not try to avoid compiler optimization, include inline, to align the usual use cases.
+//! 3. Isolating the optimizations between the `*_approach` code and benchmarking harness.
+
 use core::{hint::black_box, iter::FusedIterator};
 use criterion::{criterion_group, criterion_main, Criterion};
 use first_err::FirstErr;
@@ -39,12 +48,14 @@ mod l1 {
 
     impl FusedIterator for L1Iter {}
 
-    /// first_err algorithm.
+    /// The code implemented by first_err.
+    #[inline(never)]
     fn first_err_approach(iter: impl Iterator<Item = Result<u32, u32>>) -> Result<u32, u32> {
         iter.first_err_or_else(|iter1| iter1.sum::<u32>())
     }
 
-    /// first_err algorithm implemented by loop.
+    /// The code implemented by loop.
+    #[inline(never)]
     fn loop_approach(iter: impl Iterator<Item = Result<u32, u32>>) -> Result<u32, u32> {
         let mut sum = 0;
         for res in iter {
@@ -54,7 +65,8 @@ mod l1 {
         Ok::<u32, u32>(sum)
     }
 
-    /// first_err algorithm implemented by `collect()`.
+    /// The code implemented by `collect()`.
+    #[inline(never)]
     fn collect_approach(iter: impl Iterator<Item = Result<u32, u32>>) -> Result<u32, u32> {
         let sum = iter
             .collect::<Result<Vec<_>, _>>()?
@@ -172,7 +184,8 @@ mod l2 {
 
     impl FusedIterator for L2Iter {}
 
-    /// first_err algorithm.
+    /// The code implemented by first_err.
+    #[inline(never)]
     fn first_err_approach(
         iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
     ) -> Result<u32, u32> {
@@ -180,7 +193,8 @@ mod l2 {
             .and_then(|res| res)
     }
 
-    /// first_err algorithm implemented by loop.
+    /// The code implemented by loop.
+    #[inline(never)]
     fn loop_approach(
         mut iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
     ) -> Result<u32, u32> {
@@ -200,7 +214,7 @@ mod l2 {
                 Err(e) => {
                     inner_first_err = Some(e);
 
-                    // if inner_first_err already exists, we don't care anything further,
+                    // inner_first_err already exists, we don't care anything further,
                     // just verify all outer_res ASAP.
                     for outer_res in iter {
                         let _ = outer_res?;
@@ -220,7 +234,8 @@ mod l2 {
         Ok::<u32, u32>(sum)
     }
 
-    /// first_err algorithm implemented by `collect()`.
+    /// The code implemented by `collect()`.
+    #[inline(never)]
     fn collect_approach(
         iter: impl Iterator<Item = Result<Result<u32, u32>, u32>>,
     ) -> Result<u32, u32> {
