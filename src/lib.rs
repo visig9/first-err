@@ -204,6 +204,24 @@ where
             state: State::Active(inner),
         }
     }
+
+    #[inline]
+    fn consume_until_first_err(self) -> Option<E> {
+        match self.state {
+            // when iterator still active, consume the whole iterator until
+            // the first err be found.
+            State::Active(inner) => {
+                for res in inner {
+                    if let Err(e) = res {
+                        return Some(e);
+                    }
+                }
+                None
+            }
+            State::Exhausted => None,
+            State::FoundFirstErr(e) => Some(e),
+        }
+    }
 }
 
 impl<I, T, E> FusedIterator for FirstErrIter<I, T, E> where I: Iterator<Item = Result<T, E>> {}
@@ -346,17 +364,9 @@ pub trait FirstErr<I, T, E>: Iterator<Item = Result<T, E>> {
 
         let output = f(&mut first_err_iter);
 
-        match first_err_iter.state {
-            // when iterator still active, consume the whole iterator until
-            // the first err be found.
-            State::Active(inner) => {
-                for res in inner {
-                    res?;
-                }
-                Ok(output)
-            }
-            State::Exhausted => Ok(output),
-            State::FoundFirstErr(e) => Err(e),
+        match first_err_iter.consume_until_first_err() {
+            None => Ok(output),
+            Some(e) => Err(e),
         }
     }
 
