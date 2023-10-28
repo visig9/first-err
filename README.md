@@ -4,7 +4,7 @@
 
 # `first-err`
 
-Find the first `Err` in `Iterator<Result<T, E>>` and allow continuous iteration.
+Find the first `Err` in `Iterator<Result<T, E>>` and allow iterating continuously.
 
 This crate is specifically designed to replace the following pattern without allocation:
 
@@ -17,9 +17,9 @@ iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() );
 
 ## Features
 
-- Find first `Err` in `Iterator<Result<T, E>>` and allow to iterating continuously.
-- Speed: Roughly on par with a hand-written loop, using lazy evaluation and without allocation.
-- Minimized: no `std`, no `alloc`, no dependency.
+- Easy-to-use: simple and no way to using wrong.
+- Minimized: no `std`, no `alloc`, zero dependency.
+- Fast: Roughly on par with a hand-written loop, using lazy evaluation and no allocation.
 
 
 
@@ -143,7 +143,7 @@ assert_eq!(result, Err(2));
 
 
 
-## Benchmark
+## Performance
 
 The performance of this crate is designed to be roughly on par with hand-written loops.
 However, the compiler might apply different optimizations in various situations, and favoring
@@ -171,115 +171,283 @@ Also, don't forget to check the actual code that is used for benchmarking, which
   - kernel: Linux 6.1.0-10-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.38-1 (2023-07-14)
   - rustc: 1.72.0 (5680fa18f 2023-08-23)
   - cargo: 1.72.0 (103a7ff2e 2023-08-15)
-  - first-err: v0.1.0
-  - date: 2023-10-21
+  - first-err: v0.2.0
+  - date: 2023-10-28
 
   ### Results
 
   ```txt
-  test bench_100000_err_at_0______/__collect ... bench:          13 ns/iter (+/- 0)
-  test bench_100000_err_at_0______/_____loop ... bench:           1 ns/iter (+/- 0)
-  test bench_100000_err_at_0______/first_err ... bench:           1 ns/iter (+/- 0)
+  test l1res::err_at_0______/__collect ... bench:          11 ns/iter (+/- 0)
+  test l1res::err_at_0______/_____loop ... bench:           1 ns/iter (+/- 0)
+  test l1res::err_at_0______/first_err ... bench:           2 ns/iter (+/- 0)
 
-  test bench_100000_err_at_1______/__collect ... bench:          19 ns/iter (+/- 0)
-  test bench_100000_err_at_1______/_____loop ... bench:           2 ns/iter (+/- 0)
-  test bench_100000_err_at_1______/first_err ... bench:           2 ns/iter (+/- 0)
+  test l1res::err_at_10_____/__collect ... bench:         103 ns/iter (+/- 1)
+  test l1res::err_at_10_____/_____loop ... bench:          10 ns/iter (+/- 0)
+  test l1res::err_at_10_____/first_err ... bench:          11 ns/iter (+/- 6)
 
-  test bench_100000_err_at_10_____/__collect ... bench:          82 ns/iter (+/- 1)
-  test bench_100000_err_at_10_____/_____loop ... bench:           3 ns/iter (+/- 0)
-  test bench_100000_err_at_10_____/first_err ... bench:           3 ns/iter (+/- 0)
+  test l1res::err_at_100____/__collect ... bench:         314 ns/iter (+/- 3)
+  test l1res::err_at_100____/_____loop ... bench:          89 ns/iter (+/- 38)
+  test l1res::err_at_100____/first_err ... bench:          89 ns/iter (+/- 3)
 
-  test bench_100000_err_at_100____/__collect ... bench:         276 ns/iter (+/- 3)
-  test bench_100000_err_at_100____/_____loop ... bench:           9 ns/iter (+/- 0)
-  test bench_100000_err_at_100____/first_err ... bench:           7 ns/iter (+/- 0)
+  test l1res::err_at_1000___/__collect ... bench:        1542 ns/iter (+/- 531)
+  test l1res::err_at_1000___/_____loop ... bench:         879 ns/iter (+/- 714)
+  test l1res::err_at_1000___/first_err ... bench:         900 ns/iter (+/- 785)
 
-  test bench_100000_err_at_1000___/__collect ... bench:        1027 ns/iter (+/- 39)
-  test bench_100000_err_at_1000___/_____loop ... bench:          66 ns/iter (+/- 1)
-  test bench_100000_err_at_1000___/first_err ... bench:          60 ns/iter (+/- 0)
+  test l1res::err_at_10000__/__collect ... bench:       24843 ns/iter (+/- 6165)
+  test l1res::err_at_10000__/_____loop ... bench:       24066 ns/iter (+/- 8005)
+  test l1res::err_at_10000__/first_err ... bench:       10712 ns/iter (+/- 7917)
 
-  test bench_100000_err_at_10000__/__collect ... bench:        6168 ns/iter (+/- 149)
-  test bench_100000_err_at_10000__/_____loop ... bench:         604 ns/iter (+/- 10)
-  test bench_100000_err_at_10000__/first_err ... bench:         605 ns/iter (+/- 1)
+  test l1res::err_at_99999__/__collect ... bench:      246043 ns/iter (+/- 10544)
+  test l1res::err_at_99999__/_____loop ... bench:       86958 ns/iter (+/- 77491)
+  test l1res::err_at_99999__/first_err ... bench:       87586 ns/iter (+/- 81596)
 
-  test bench_100000_err_at_99999__/__collect ... bench:       57075 ns/iter (+/- 344)
-  test bench_100000_err_at_99999__/_____loop ... bench:        5985 ns/iter (+/- 19)
-  test bench_100000_err_at_99999__/first_err ... bench:        5980 ns/iter (+/- 11)
+  test l1res::err_not_exists/__collect ... bench:      256112 ns/iter (+/- 6170)
+  test l1res::err_not_exists/_____loop ... bench:       86596 ns/iter (+/- 60184)
+  test l1res::err_not_exists/first_err ... bench:       86703 ns/iter (+/- 71470)
 
-  test bench_100000_err_at_100000_/__collect ... bench:       60171 ns/iter (+/- 4611)
-  test bench_100000_err_at_100000_/_____loop ... bench:        5982 ns/iter (+/- 8)
-  test bench_100000_err_at_100000_/first_err ... bench:        5987 ns/iter (+/- 33)
+  test l2res::l1_err_at_0_______l2_err_at_1000___/__collect ... bench:          18 ns/iter (+/- 0)
+  test l2res::l1_err_at_0_______l2_err_at_1000___/_____loop ... bench:          11 ns/iter (+/- 0)
+  test l2res::l1_err_at_0_______l2_err_at_1000___/first_err ... bench:          10 ns/iter (+/- 0)
 
-  test bench_100000_err_not_exists/__collect ... bench:       58460 ns/iter (+/- 343)
-  test bench_100000_err_not_exists/_____loop ... bench:           1 ns/iter (+/- 0)
-  test bench_100000_err_not_exists/first_err ... bench:           1 ns/iter (+/- 0)
+  test l2res::l1_err_at_10______l2_err_at_1000___/__collect ... bench:         107 ns/iter (+/- 4)
+  test l2res::l1_err_at_10______l2_err_at_1000___/_____loop ... bench:          21 ns/iter (+/- 0)
+  test l2res::l1_err_at_10______l2_err_at_1000___/first_err ... bench:          20 ns/iter (+/- 0)
 
-  test bench_100000_l1_err_at_0_______l2_err_at_1000___/__collect ... bench:          14 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_0_______l2_err_at_1000___/_____loop ... bench:           3 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_0_______l2_err_at_1000___/first_err ... bench:           6 ns/iter (+/- 0)
+  test l2res::l1_err_at_100_____l2_err_at_1000___/__collect ... bench:         379 ns/iter (+/- 8)
+  test l2res::l1_err_at_100_____l2_err_at_1000___/_____loop ... bench:         163 ns/iter (+/- 5)
+  test l2res::l1_err_at_100_____l2_err_at_1000___/first_err ... bench:         156 ns/iter (+/- 3)
 
-  test bench_100000_l1_err_at_1_______l2_err_at_1000___/__collect ... bench:          21 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_1_______l2_err_at_1000___/_____loop ... bench:           3 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_1_______l2_err_at_1000___/first_err ... bench:           6 ns/iter (+/- 0)
+  test l2res::l1_err_at_1000____l2_err_at_1000___/__collect ... bench:        1924 ns/iter (+/- 7)
+  test l2res::l1_err_at_1000____l2_err_at_1000___/_____loop ... bench:        1446 ns/iter (+/- 12)
+  test l2res::l1_err_at_1000____l2_err_at_1000___/first_err ... bench:        1453 ns/iter (+/- 29)
 
-  test bench_100000_l1_err_at_10______l2_err_at_1000___/__collect ... bench:          95 ns/iter (+/- 1)
-  test bench_100000_l1_err_at_10______l2_err_at_1000___/_____loop ... bench:          13 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_10______l2_err_at_1000___/first_err ... bench:          10 ns/iter (+/- 0)
+  test l2res::l1_err_at_10000___l2_err_at_1000___/__collect ... bench:       16222 ns/iter (+/- 555)
+  test l2res::l1_err_at_10000___l2_err_at_1000___/_____loop ... bench:       14432 ns/iter (+/- 5748)
+  test l2res::l1_err_at_10000___l2_err_at_1000___/first_err ... bench:       14363 ns/iter (+/- 5538)
 
-  test bench_100000_l1_err_at_100_____l2_err_at_1000___/__collect ... bench:         362 ns/iter (+/- 3)
-  test bench_100000_l1_err_at_100_____l2_err_at_1000___/_____loop ... bench:         110 ns/iter (+/- 2)
-  test bench_100000_l1_err_at_100_____l2_err_at_1000___/first_err ... bench:          72 ns/iter (+/- 0)
+  test l2res::l1_err_at_99999___l2_err_at_1000___/__collect ... bench:      183241 ns/iter (+/- 2231)
+  test l2res::l1_err_at_99999___l2_err_at_1000___/_____loop ... bench:      143188 ns/iter (+/- 48487)
+  test l2res::l1_err_at_99999___l2_err_at_1000___/first_err ... bench:      139212 ns/iter (+/- 26714)
 
-  test bench_100000_l1_err_at_1000____l2_err_at_1000___/__collect ... bench:        1319 ns/iter (+/- 14)
-  test bench_100000_l1_err_at_1000____l2_err_at_1000___/_____loop ... bench:        1020 ns/iter (+/- 15)
-  test bench_100000_l1_err_at_1000____l2_err_at_1000___/first_err ... bench:         626 ns/iter (+/- 6)
+  test l2res::l1_err_not_exists_l2_err_at_1000___/__collect ... bench:      180766 ns/iter (+/- 2712)
+  test l2res::l1_err_not_exists_l2_err_at_1000___/_____loop ... bench:      143152 ns/iter (+/- 680)
+  test l2res::l1_err_not_exists_l2_err_at_1000___/first_err ... bench:      140688 ns/iter (+/- 75539)
 
-  test bench_100000_l1_err_at_10000___l2_err_at_1000___/__collect ... bench:        9883 ns/iter (+/- 633)
-  test bench_100000_l1_err_at_10000___l2_err_at_1000___/_____loop ... bench:        1115 ns/iter (+/- 5)
-  test bench_100000_l1_err_at_10000___l2_err_at_1000___/first_err ... bench:         774 ns/iter (+/- 52)
+  test l2res::l1_err_at_1000____l2_err_at_0______/__collect ... bench:        1921 ns/iter (+/- 22)
+  test l2res::l1_err_at_1000____l2_err_at_0______/_____loop ... bench:        1354 ns/iter (+/- 595)
+  test l2res::l1_err_at_1000____l2_err_at_0______/first_err ... bench:        1446 ns/iter (+/- 639)
 
-  test bench_100000_l1_err_at_99999___l2_err_at_1000___/__collect ... bench:       94787 ns/iter (+/- 330)
-  test bench_100000_l1_err_at_99999___l2_err_at_1000___/_____loop ... bench:        1780 ns/iter (+/- 4)
-  test bench_100000_l1_err_at_99999___l2_err_at_1000___/first_err ... bench:        2123 ns/iter (+/- 5)
+  test l2res::l1_err_at_1000____l2_err_at_10_____/__collect ... bench:        1892 ns/iter (+/- 29)
+  test l2res::l1_err_at_1000____l2_err_at_10_____/_____loop ... bench:        1668 ns/iter (+/- 762)
+  test l2res::l1_err_at_1000____l2_err_at_10_____/first_err ... bench:        1458 ns/iter (+/- 354)
 
-  test bench_100000_l1_err_at_100000__l2_err_at_1000___/__collect ... bench:       96160 ns/iter (+/- 161)
-  test bench_100000_l1_err_at_100000__l2_err_at_1000___/_____loop ... bench:        1787 ns/iter (+/- 3)
-  test bench_100000_l1_err_at_100000__l2_err_at_1000___/first_err ... bench:        2118 ns/iter (+/- 123)
+  test l2res::l1_err_at_1000____l2_err_at_100____/__collect ... bench:        1878 ns/iter (+/- 53)
+  test l2res::l1_err_at_1000____l2_err_at_100____/_____loop ... bench:        2784 ns/iter (+/- 537)
+  test l2res::l1_err_at_1000____l2_err_at_100____/first_err ... bench:        2948 ns/iter (+/- 715)
 
-  test bench_100000_l1_err_at_none____l2_err_at_0______/__collect ... bench:       89359 ns/iter (+/- 309)
-  test bench_100000_l1_err_at_none____l2_err_at_0______/_____loop ... bench:           3 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_none____l2_err_at_0______/first_err ... bench:           6 ns/iter (+/- 0)
+  test l2res::l1_err_at_1000____l2_err_at_1000___/__collect #2 ... bench:        1884 ns/iter (+/- 68)
+  test l2res::l1_err_at_1000____l2_err_at_1000___/_____loop #2 ... bench:        1516 ns/iter (+/- 59)
+  test l2res::l1_err_at_1000____l2_err_at_1000___/first_err #2 ... bench:        1472 ns/iter (+/- 71)
 
-  test bench_100000_l1_err_at_none____l2_err_at_1______/__collect ... bench:       89247 ns/iter (+/- 211)
-  test bench_100000_l1_err_at_none____l2_err_at_1______/_____loop ... bench:           4 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_none____l2_err_at_1______/first_err ... bench:           6 ns/iter (+/- 0)
+  test l2res::l1_err_at_1000____l2_err_at_10000__/__collect ... bench:        1937 ns/iter (+/- 22)
+  test l2res::l1_err_at_1000____l2_err_at_10000__/_____loop ... bench:        1514 ns/iter (+/- 43)
+  test l2res::l1_err_at_1000____l2_err_at_10000__/first_err ... bench:        1486 ns/iter (+/- 33)
 
-  test bench_100000_l1_err_at_none____l2_err_at_10_____/__collect ... bench:       89375 ns/iter (+/- 131)
-  test bench_100000_l1_err_at_none____l2_err_at_10_____/_____loop ... bench:          13 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_none____l2_err_at_10_____/first_err ... bench:          11 ns/iter (+/- 0)
+  test l2res::l1_err_at_1000____l2_err_at_99999__/__collect ... bench:        1912 ns/iter (+/- 36)
+  test l2res::l1_err_at_1000____l2_err_at_99999__/_____loop ... bench:        1446 ns/iter (+/- 9)
+  test l2res::l1_err_at_1000____l2_err_at_99999__/first_err ... bench:        1454 ns/iter (+/- 45)
 
-  test bench_100000_l1_err_at_none____l2_err_at_100____/__collect ... bench:       89231 ns/iter (+/- 161)
-  test bench_100000_l1_err_at_none____l2_err_at_100____/_____loop ... bench:         106 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_none____l2_err_at_100____/first_err ... bench:          73 ns/iter (+/- 2)
+  test l2res::l1_err_at_1000____l2_err_not_exists/__collect ... bench:        1936 ns/iter (+/- 52)
+  test l2res::l1_err_at_1000____l2_err_not_exists/_____loop ... bench:        1512 ns/iter (+/- 83)
+  test l2res::l1_err_at_1000____l2_err_not_exists/first_err ... bench:        1450 ns/iter (+/- 8)
 
-  test bench_100000_l1_err_at_none____l2_err_at_1000___/__collect ... bench:       89982 ns/iter (+/- 84)
-  test bench_100000_l1_err_at_none____l2_err_at_1000___/_____loop ... bench:         966 ns/iter (+/- 0)
-  test bench_100000_l1_err_at_none____l2_err_at_1000___/first_err ... bench:         616 ns/iter (+/- 3)
+  test l2res::l1_err_not_exists_l2_err_at_0______/__collect ... bench:      181537 ns/iter (+/- 3474)
+  test l2res::l1_err_not_exists_l2_err_at_0______/_____loop ... bench:      134772 ns/iter (+/- 39332)
+  test l2res::l1_err_not_exists_l2_err_at_0______/first_err ... bench:      142383 ns/iter (+/- 58778)
 
-  test bench_100000_l1_err_at_none____l2_err_at_10000__/__collect ... bench:       96578 ns/iter (+/- 352)
-  test bench_100000_l1_err_at_none____l2_err_at_10000__/_____loop ... bench:        9569 ns/iter (+/- 47)
-  test bench_100000_l1_err_at_none____l2_err_at_10000__/first_err ... bench:        6058 ns/iter (+/- 8)
+  test l2res::l1_err_not_exists_l2_err_at_10_____/__collect ... bench:      185324 ns/iter (+/- 14065)
+  test l2res::l1_err_not_exists_l2_err_at_10_____/_____loop ... bench:      134675 ns/iter (+/- 39927)
+  test l2res::l1_err_not_exists_l2_err_at_10_____/first_err ... bench:      142835 ns/iter (+/- 58236)
 
-  test bench_100000_l1_err_at_none____l2_err_at_99999__/__collect ... bench:      173763 ns/iter (+/- 646)
-  test bench_100000_l1_err_at_none____l2_err_at_99999__/_____loop ... bench:       95541 ns/iter (+/- 490)
-  test bench_100000_l1_err_at_none____l2_err_at_99999__/first_err ... bench:       60196 ns/iter (+/- 539)
+  test l2res::l1_err_not_exists_l2_err_at_100____/__collect ... bench:      179775 ns/iter (+/- 3277)
+  test l2res::l1_err_not_exists_l2_err_at_100____/_____loop ... bench:      143182 ns/iter (+/- 37429)
+  test l2res::l1_err_not_exists_l2_err_at_100____/first_err ... bench:      140019 ns/iter (+/- 1241)
 
-  test bench_100000_l1_err_at_none____l2_err_at_100000_/__collect ... bench:      167568 ns/iter (+/- 1418)
-  test bench_100000_l1_err_at_none____l2_err_at_100000_/_____loop ... bench:       95596 ns/iter (+/- 178)
-  test bench_100000_l1_err_at_none____l2_err_at_100000_/first_err ... bench:       50250 ns/iter (+/- 3401)
+  test l2res::l1_err_not_exists_l2_err_at_1000___/__collect #2 ... bench:      180570 ns/iter (+/- 680)
+  test l2res::l1_err_not_exists_l2_err_at_1000___/_____loop #2 ... bench:      143217 ns/iter (+/- 2567)
+  test l2res::l1_err_not_exists_l2_err_at_1000___/first_err #2 ... bench:      140436 ns/iter (+/- 63962)
 
-  test bench_100000_err_not_exists_____________________/__collect ... bench:      182434 ns/iter (+/- 1666)
-  test bench_100000_err_not_exists_____________________/_____loop ... bench:       95634 ns/iter (+/- 82)
-  test bench_100000_err_not_exists_____________________/first_err ... bench:           5 ns/iter (+/- 0)
+  test l2res::l1_err_not_exists_l2_err_at_10000__/__collect ... bench:      184348 ns/iter (+/- 4317)
+  test l2res::l1_err_not_exists_l2_err_at_10000__/_____loop ... bench:      143244 ns/iter (+/- 241)
+  test l2res::l1_err_not_exists_l2_err_at_10000__/first_err ... bench:      141813 ns/iter (+/- 15499)
+
+  test l2res::l1_err_not_exists_l2_err_at_99999__/__collect ... bench:      260050 ns/iter (+/- 3608)
+  test l2res::l1_err_not_exists_l2_err_at_99999__/_____loop ... bench:      143346 ns/iter (+/- 4882)
+  test l2res::l1_err_not_exists_l2_err_at_99999__/first_err ... bench:      143413 ns/iter (+/- 3107)
+
+  test l2res::l1_err_at_0_______l2_err_not_exists/__collect ... bench:          18 ns/iter (+/- 0)
+  test l2res::l1_err_at_0_______l2_err_not_exists/_____loop ... bench:          11 ns/iter (+/- 0)
+  test l2res::l1_err_at_0_______l2_err_not_exists/first_err ... bench:          10 ns/iter (+/- 0)
+
+  test l2res::l1_err_at_10______l2_err_not_exists/__collect ... bench:         129 ns/iter (+/- 2)
+  test l2res::l1_err_at_10______l2_err_not_exists/_____loop ... bench:          20 ns/iter (+/- 0)
+  test l2res::l1_err_at_10______l2_err_not_exists/first_err ... bench:          20 ns/iter (+/- 0)
+
+  test l2res::l1_err_at_100_____l2_err_not_exists/__collect ... bench:         413 ns/iter (+/- 2)
+  test l2res::l1_err_at_100_____l2_err_not_exists/_____loop ... bench:         163 ns/iter (+/- 3)
+  test l2res::l1_err_at_100_____l2_err_not_exists/first_err ... bench:         154 ns/iter (+/- 1)
+
+  test l2res::l1_err_at_1000____l2_err_not_exists/__collect #2 ... bench:        1914 ns/iter (+/- 18)
+  test l2res::l1_err_at_1000____l2_err_not_exists/_____loop #2 ... bench:        1444 ns/iter (+/- 71)
+  test l2res::l1_err_at_1000____l2_err_not_exists/first_err #2 ... bench:        1484 ns/iter (+/- 20)
+
+  test l2res::l1_err_at_10000___l2_err_not_exists/__collect ... bench:       16071 ns/iter (+/- 188)
+  test l2res::l1_err_at_10000___l2_err_not_exists/_____loop ... bench:       14350 ns/iter (+/- 389)
+  test l2res::l1_err_at_10000___l2_err_not_exists/first_err ... bench:       14355 ns/iter (+/- 24)
+
+  test l2res::l1_err_at_99999___l2_err_not_exists/__collect ... bench:      179823 ns/iter (+/- 530)
+  test l2res::l1_err_at_99999___l2_err_not_exists/_____loop ... bench:      143386 ns/iter (+/- 2464)
+  test l2res::l1_err_at_99999___l2_err_not_exists/first_err ... bench:      143362 ns/iter (+/- 117)
+
+  test l2res::l1_err_not_exists_l2_err_not_exists/__collect ... bench:      269990 ns/iter (+/- 5142)
+  test l2res::l1_err_not_exists_l2_err_not_exists/_____loop ... bench:      143353 ns/iter (+/- 12659)
+  test l2res::l1_err_not_exists_l2_err_not_exists/first_err ... bench:      143382 ns/iter (+/- 150)
+
+  test l1opt::none_at_0______/__collect ... bench:          11 ns/iter (+/- 0)
+  test l1opt::none_at_0______/_____loop ... bench:           1 ns/iter (+/- 0)
+  test l1opt::none_at_0______/first_err ... bench:           2 ns/iter (+/- 0)
+
+  test l1opt::none_at_10_____/__collect ... bench:         112 ns/iter (+/- 1)
+  test l1opt::none_at_10_____/_____loop ... bench:          10 ns/iter (+/- 3)
+  test l1opt::none_at_10_____/first_err ... bench:          25 ns/iter (+/- 6)
+
+  test l1opt::none_at_100____/__collect ... bench:         364 ns/iter (+/- 3)
+  test l1opt::none_at_100____/_____loop ... bench:         263 ns/iter (+/- 70)
+  test l1opt::none_at_100____/first_err ... bench:          93 ns/iter (+/- 39)
+
+  test l1opt::none_at_1000___/__collect ... bench:        1566 ns/iter (+/- 216)
+  test l1opt::none_at_1000___/_____loop ... bench:        1927 ns/iter (+/- 772)
+  test l1opt::none_at_1000___/first_err ... bench:        1280 ns/iter (+/- 791)
+
+  test l1opt::none_at_10000__/__collect ... bench:       11772 ns/iter (+/- 5020)
+  test l1opt::none_at_10000__/_____loop ... bench:        8357 ns/iter (+/- 3201)
+  test l1opt::none_at_10000__/first_err ... bench:        7937 ns/iter (+/- 3679)
+
+  test l1opt::none_at_99999__/__collect ... bench:      263004 ns/iter (+/- 15409)
+  test l1opt::none_at_99999__/_____loop ... bench:      239036 ns/iter (+/- 78042)
+  test l1opt::none_at_99999__/first_err ... bench:      242659 ns/iter (+/- 132)
+
+  test l1opt::none_not_exists/__collect ... bench:      273014 ns/iter (+/- 28528)
+  test l1opt::none_not_exists/_____loop ... bench:       83924 ns/iter (+/- 32051)
+  test l1opt::none_not_exists/first_err ... bench:       79956 ns/iter (+/- 75761)
+
+  test l2opt::l1_none_at_0_______l2_none_at_1000___/__collect ... bench:          18 ns/iter (+/- 0)
+  test l2opt::l1_none_at_0_______l2_none_at_1000___/_____loop ... bench:          11 ns/iter (+/- 0)
+  test l2opt::l1_none_at_0_______l2_none_at_1000___/first_err ... bench:          10 ns/iter (+/- 0)
+
+  test l2opt::l1_none_at_10______l2_none_at_1000___/__collect ... bench:         120 ns/iter (+/- 1)
+  test l2opt::l1_none_at_10______l2_none_at_1000___/_____loop ... bench:          20 ns/iter (+/- 0)
+  test l2opt::l1_none_at_10______l2_none_at_1000___/first_err ... bench:          20 ns/iter (+/- 0)
+
+  test l2opt::l1_none_at_100_____l2_none_at_1000___/__collect ... bench:         359 ns/iter (+/- 18)
+  test l2opt::l1_none_at_100_____l2_none_at_1000___/_____loop ... bench:         154 ns/iter (+/- 0)
+  test l2opt::l1_none_at_100_____l2_none_at_1000___/first_err ... bench:         154 ns/iter (+/- 1)
+
+  test l2opt::l1_none_at_1000____l2_none_at_1000___/__collect ... bench:        1858 ns/iter (+/- 19)
+  test l2opt::l1_none_at_1000____l2_none_at_1000___/_____loop ... bench:        1444 ns/iter (+/- 2)
+  test l2opt::l1_none_at_1000____l2_none_at_1000___/first_err ... bench:        1460 ns/iter (+/- 87)
+
+  test l2opt::l1_none_at_10000___l2_none_at_1000___/__collect ... bench:       16062 ns/iter (+/- 256)
+  test l2opt::l1_none_at_10000___l2_none_at_1000___/_____loop ... bench:       14367 ns/iter (+/- 108)
+  test l2opt::l1_none_at_10000___l2_none_at_1000___/first_err ... bench:       14340 ns/iter (+/- 155)
+
+  test l2opt::l1_none_at_99999___l2_none_at_1000___/__collect ... bench:      180597 ns/iter (+/- 8952)
+  test l2opt::l1_none_at_99999___l2_none_at_1000___/_____loop ... bench:      143304 ns/iter (+/- 58020)
+  test l2opt::l1_none_at_99999___l2_none_at_1000___/first_err ... bench:      293926 ns/iter (+/- 82793)
+
+  test l2opt::l1_none_not_exists_l2_none_at_1000___/__collect ... bench:      182543 ns/iter (+/- 4375)
+  test l2opt::l1_none_not_exists_l2_none_at_1000___/_____loop ... bench:      143175 ns/iter (+/- 46427)
+  test l2opt::l1_none_not_exists_l2_none_at_1000___/first_err ... bench:      140369 ns/iter (+/- 1080)
+
+  test l2opt::l1_none_at_1000____l2_none_at_0______/__collect ... bench:        1940 ns/iter (+/- 53)
+  test l2opt::l1_none_at_1000____l2_none_at_0______/_____loop ... bench:        1357 ns/iter (+/- 14)
+  test l2opt::l1_none_at_1000____l2_none_at_0______/first_err ... bench:        1452 ns/iter (+/- 707)
+
+  test l2opt::l1_none_at_1000____l2_none_at_10_____/__collect ... bench:        1920 ns/iter (+/- 90)
+  test l2opt::l1_none_at_1000____l2_none_at_10_____/_____loop ... bench:        1358 ns/iter (+/- 675)
+  test l2opt::l1_none_at_1000____l2_none_at_10_____/first_err ... bench:        1453 ns/iter (+/- 50)
+
+  test l2opt::l1_none_at_1000____l2_none_at_100____/__collect ... bench:        1942 ns/iter (+/- 34)
+  test l2opt::l1_none_at_1000____l2_none_at_100____/_____loop ... bench:        1468 ns/iter (+/- 408)
+  test l2opt::l1_none_at_1000____l2_none_at_100____/first_err ... bench:        2951 ns/iter (+/- 663)
+
+  test l2opt::l1_none_at_1000____l2_none_at_1000___/__collect #2 ... bench:        1949 ns/iter (+/- 57)
+  test l2opt::l1_none_at_1000____l2_none_at_1000___/_____loop #2 ... bench:        1462 ns/iter (+/- 39)
+  test l2opt::l1_none_at_1000____l2_none_at_1000___/first_err #2 ... bench:        1451 ns/iter (+/- 14)
+
+  test l2opt::l1_none_at_1000____l2_none_at_10000__/__collect ... bench:        1954 ns/iter (+/- 34)
+  test l2opt::l1_none_at_1000____l2_none_at_10000__/_____loop ... bench:        1449 ns/iter (+/- 33)
+  test l2opt::l1_none_at_1000____l2_none_at_10000__/first_err ... bench:        1454 ns/iter (+/- 114)
+
+  test l2opt::l1_none_at_1000____l2_none_at_99999__/__collect ... bench:        1947 ns/iter (+/- 17)
+  test l2opt::l1_none_at_1000____l2_none_at_99999__/_____loop ... bench:        1510 ns/iter (+/- 57)
+  test l2opt::l1_none_at_1000____l2_none_at_99999__/first_err ... bench:        1454 ns/iter (+/- 51)
+
+  test l2opt::l1_none_at_1000____l2_none_not_exists/__collect ... bench:        1915 ns/iter (+/- 53)
+  test l2opt::l1_none_at_1000____l2_none_not_exists/_____loop ... bench:        1451 ns/iter (+/- 49)
+  test l2opt::l1_none_at_1000____l2_none_not_exists/first_err ... bench:        1460 ns/iter (+/- 99)
+
+  test l2opt::l1_none_not_exists_l2_none_at_0______/__collect ... bench:      180624 ns/iter (+/- 1317)
+  test l2opt::l1_none_not_exists_l2_none_at_0______/_____loop ... bench:      135205 ns/iter (+/- 53407)
+  test l2opt::l1_none_not_exists_l2_none_at_0______/first_err ... bench:      142770 ns/iter (+/- 77869)
+
+  test l2opt::l1_none_not_exists_l2_none_at_10_____/__collect ... bench:      178635 ns/iter (+/- 2068)
+  test l2opt::l1_none_not_exists_l2_none_at_10_____/_____loop ... bench:      134618 ns/iter (+/- 326)
+  test l2opt::l1_none_not_exists_l2_none_at_10_____/first_err ... bench:      142680 ns/iter (+/- 1325)
+
+  test l2opt::l1_none_not_exists_l2_none_at_100____/__collect ... bench:      180881 ns/iter (+/- 4920)
+  test l2opt::l1_none_not_exists_l2_none_at_100____/_____loop ... bench:      144097 ns/iter (+/- 66716)
+  test l2opt::l1_none_not_exists_l2_none_at_100____/first_err ... bench:      139882 ns/iter (+/- 47413)
+
+  test l2opt::l1_none_not_exists_l2_none_at_1000___/__collect #2 ... bench:      182234 ns/iter (+/- 1207)
+  test l2opt::l1_none_not_exists_l2_none_at_1000___/_____loop #2 ... bench:      143290 ns/iter (+/- 277)
+  test l2opt::l1_none_not_exists_l2_none_at_1000___/first_err #2 ... bench:      140271 ns/iter (+/- 2245)
+
+  test l2opt::l1_none_not_exists_l2_none_at_10000__/__collect ... bench:      183328 ns/iter (+/- 2854)
+  test l2opt::l1_none_not_exists_l2_none_at_10000__/_____loop ... bench:      143274 ns/iter (+/- 122)
+  test l2opt::l1_none_not_exists_l2_none_at_10000__/first_err ... bench:      141344 ns/iter (+/- 1163)
+
+  test l2opt::l1_none_not_exists_l2_none_at_99999__/__collect ... bench:      255029 ns/iter (+/- 4666)
+  test l2opt::l1_none_not_exists_l2_none_at_99999__/_____loop ... bench:      143897 ns/iter (+/- 642)
+  test l2opt::l1_none_not_exists_l2_none_at_99999__/first_err ... bench:      143559 ns/iter (+/- 1435)
+
+  test l2opt::l1_none_at_0_______l2_none_not_exists/__collect ... bench:          18 ns/iter (+/- 0)
+  test l2opt::l1_none_at_0_______l2_none_not_exists/_____loop ... bench:          11 ns/iter (+/- 0)
+  test l2opt::l1_none_at_0_______l2_none_not_exists/first_err ... bench:          10 ns/iter (+/- 0)
+
+  test l2opt::l1_none_at_10______l2_none_not_exists/__collect ... bench:         123 ns/iter (+/- 2)
+  test l2opt::l1_none_at_10______l2_none_not_exists/_____loop ... bench:          20 ns/iter (+/- 0)
+  test l2opt::l1_none_at_10______l2_none_not_exists/first_err ... bench:          21 ns/iter (+/- 0)
+
+  test l2opt::l1_none_at_100_____l2_none_not_exists/__collect ... bench:         383 ns/iter (+/- 22)
+  test l2opt::l1_none_at_100_____l2_none_not_exists/_____loop ... bench:         155 ns/iter (+/- 2)
+  test l2opt::l1_none_at_100_____l2_none_not_exists/first_err ... bench:         154 ns/iter (+/- 4)
+
+  test l2opt::l1_none_at_1000____l2_none_not_exists/__collect #2 ... bench:        1926 ns/iter (+/- 59)
+  test l2opt::l1_none_at_1000____l2_none_not_exists/_____loop #2 ... bench:        1445 ns/iter (+/- 50)
+  test l2opt::l1_none_at_1000____l2_none_not_exists/first_err #2 ... bench:        1450 ns/iter (+/- 12)
+
+  test l2opt::l1_none_at_10000___l2_none_not_exists/__collect ... bench:       16122 ns/iter (+/- 144)
+  test l2opt::l1_none_at_10000___l2_none_not_exists/_____loop ... bench:       14369 ns/iter (+/- 185)
+  test l2opt::l1_none_at_10000___l2_none_not_exists/first_err ... bench:       14423 ns/iter (+/- 272)
+
+  test l2opt::l1_none_at_99999___l2_none_not_exists/__collect ... bench:      179766 ns/iter (+/- 1038)
+  test l2opt::l1_none_at_99999___l2_none_not_exists/_____loop ... bench:      143399 ns/iter (+/- 762)
+  test l2opt::l1_none_at_99999___l2_none_not_exists/first_err ... bench:      143623 ns/iter (+/- 4965)
+
+  test l2opt::l1_none_not_exists_l2_none_not_exists/__collect ... bench:      274073 ns/iter (+/- 4701)
+  test l2opt::l1_none_not_exists_l2_none_not_exists/_____loop ... bench:      143589 ns/iter (+/- 3224)
+  test l2opt::l1_none_not_exists_l2_none_not_exists/first_err ... bench:      143612 ns/iter (+/- 302)
   ```
 
   </p>

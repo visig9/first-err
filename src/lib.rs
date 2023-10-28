@@ -1,6 +1,6 @@
 //! # `first-err`
 //!
-//! Find the first `Err` in `Iterator<Result<T, E>>` and allow continuous iteration.
+//! Find the first `Err` in `Iterator<Result<T, E>>` and allow iterating continuously.
 //!
 //! This crate is specifically designed to replace the following pattern without allocation:
 //!
@@ -15,9 +15,9 @@
 //!
 //! ## Features
 //!
-//! - Find first `Err` in `Iterator<Result<T, E>>` and allow to iterating continuously.
-//! - Speed: Roughly on par with a hand-written loop, using lazy evaluation and no allocation.
-//! - Minimized: no `std`, no `alloc`, no dependency.
+//! - Easy-to-use: simple and no way to using wrong.
+//! - Minimized: no `std`, no `alloc`, zero dependency.
+//! - Fast: Roughly on par with a hand-written loop, using lazy evaluation and no allocation.
 //!
 //!
 //!
@@ -139,12 +139,11 @@
 //! ) -> Result<u8, u8> {
 //!     iter
 //!         .into_iter()
-//!         .first_err_or_else(|iter1| { // iter1 = impl Iterator<Item = Result<u8, u8>>
+//!         .first_err_or_try(|iter1| { // iter1 = impl Iterator<Item = Result<u8, u8>>
 //!             iter1.first_err_or_else(|iter2| { // iter2 = impl Iterator<Item = u8>
 //!                 iter2.sum::<u8>()
 //!             })
 //!         })
-//!         .and_then(|res_res| res_res)
 //! }
 //!
 //! let result = fallible_sum(array);
@@ -154,7 +153,7 @@
 //!
 //!
 //!
-//! ## Benchmark
+//! ## Performance
 //!
 //! The performance of this crate is designed to be roughly on par with hand-written loops.
 //! However, the compiler might apply different optimizations in various situations, and favoring
