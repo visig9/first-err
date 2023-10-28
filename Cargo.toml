@@ -1,9 +1,9 @@
 [package]
 name = "first-err"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["visig"]
-description = "Equivalent of iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() ) pattern without allocation."
+description = "Find the first Err in Iterator<Result<T, E>> and allow iterating continuously."
 readme = "README.md"
 repository = "https://github.com/visig9/first-err"
 license = "MIT"

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.2.0 - 2023-10-28
+
 - BREAKING: add trait bound `Iterator` on `FirstErr` trait.
 - new: add following new methods to `FirstErr`:
     - `first_err_or_try()`
