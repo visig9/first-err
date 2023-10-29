@@ -722,24 +722,6 @@ mod tests {
             assert_eq!(ans, Err(2));
         }
 
-        // #[test]
-        // fn test_first_none_or_else_with_1_layer_data_and_without_none() {
-        //     let ans = [Some(0u8), Some(1), Some(2), Some(3), Some(4)]
-        //         .into_iter()
-        //         .first_none_or_else(|iter1| iter1.sum::<u8>());
-
-        //     assert_eq!(ans, Some(10));
-        // }
-
-        // #[test]
-        // fn test_first_none_or_else_with_1_layer_data_and_with_none() {
-        //     let ans = [Some(0u8), Some(1), None, Some(3), Some(4)]
-        //         .into_iter()
-        //         .first_none_or_else(|iter1| iter1.sum::<u8>());
-
-        //     assert_eq!(ans, None);
-        // }
-
         #[test]
         fn _or_else_with_2_layer_data_and_outmost_err_in_layer_1() {
             let ans = [
