@@ -597,6 +597,15 @@ mod result {
                 State::Exhausted => None,
             }
         }
+
+        #[inline]
+        fn size_hint(&self) -> (usize, Option<usize>) {
+            match &self.state {
+                State::Active(inner) => inner.size_hint(),
+                State::FoundFirstErr(_) => (0, Some(0)),
+                State::Exhausted => (0, Some(0)),
+            }
+        }
     }
 
     impl<I, T, E> FusedIterator for FirstErrIter<I, T, E> where I: Iterator<Item = Result<T, E>> {}
@@ -679,6 +688,15 @@ mod option {
                 },
                 State::FoundFirstNone => None,
                 State::Exhausted => None,
+            }
+        }
+
+        #[inline]
+        fn size_hint(&self) -> (usize, Option<usize>) {
+            match &self.state {
+                State::Active(inner) => inner.size_hint(),
+                State::FoundFirstNone => (0, Some(0)),
+                State::Exhausted => (0, Some(0)),
             }
         }
     }
