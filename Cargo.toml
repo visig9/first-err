@@ -9,6 +9,7 @@ repository = "https://github.com/visig9/first-err"
 license = "MIT"
 keywords = ["iterator", "collect"]
 categories = ["rust-patterns", "no-std", "no-std::no-alloc"]
+exclude = ["/.github"]
 
 
 [dependencies]
