@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.2.2 - 2023-12-23
+
+- doc: fix some errors in document. No actual code change.
+
+
+
 ## v0.2.1 - 2023-11-09
 
 - performance: impl `size_hint()` for  `FirstErrIter` and `FirstNoneIter`.
