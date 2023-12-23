@@ -1,11 +1,11 @@
 //! # `first-err`
 //!
-//! Find the first `Err` in `Iterator<Result<T, E>>` and allow iterating continuously.
+//! Find the first `Err` in `Iterator<Item = Result<T, E>>` and allow iterating continuously.
 //!
 //! This crate is specifically designed to replace the following pattern without allocation:
 //!
 //! ```txt
-//! // iter: impl Iterator<Result<T, E>>
+//! // iter: impl Iterator<Item = Result<T, E>>
 //! iter.collect::<Result<Vec<T>, E>>().map(|vec| vec.into_iter().foo() );
 //! ```
 //!
@@ -18,6 +18,7 @@
 //! - Easy-to-use: simple and no way to using wrong.
 //! - Minimized: no `std`, no `alloc`, zero dependency.
 //! - Fast: Roughly on par with a hand-written loop, using lazy evaluation and no allocation.
+//! - Nestable: `T` in `Iterator<Item = Result<T, E>>` can lazily produce more `Result`s.
 //!
 //!
 //!
