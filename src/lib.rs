@@ -125,7 +125,8 @@
 //! # }
 //! ```
 //!
-//! Implementing the above logic in a loop without allocation may be error-prone and complicated.
+//! Implementing the above logic in a loop without allocation may be
+//! [error-prone and complicated](https://github.com/visig9/first-err/blob/f666ef16c0b72174e7862468f1dbda382ebe6b68/benches/benchmark.rs#L194-L231).
 //! This crate simplifies that for you:
 //!
 //! ```rust
