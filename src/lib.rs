@@ -754,7 +754,7 @@ mod tests {
             .into_iter()
             .first_err_or_else(|iter1| {
                 iter1
-                    .map(|x| x) // could chain other ops
+                    // could chain other ops
                     .first_err_or_else(|iter2| iter2.sum::<u8>())
             });
 
@@ -773,7 +773,7 @@ mod tests {
             .into_iter()
             .first_err_or_else(|iter1| {
                 iter1
-                    .map(|x| x) // could chain other ops
+                    // could chain other ops
                     .first_err_or_else(|iter2| iter2.sum::<u8>())
             });
 
@@ -792,10 +792,10 @@ mod tests {
             .into_iter()
             .first_err_or_else(|iter1| {
                 iter1
-                    .map(|x| x) // could chain other ops
+                    // could chain other ops
                     .first_err_or_else(|iter2| {
                         iter2
-                            .map(|x| x) // could chain other ops
+                            // could chain other ops
                             .first_err_or_else(|iter3| iter3.sum::<u8>())
                     })
             });
@@ -1029,7 +1029,7 @@ mod tests {
             .into_iter()
             .first_none_or_else(|iter1| {
                 iter1
-                    .map(|x| x) // could chain other ops
+                    // could chain other ops
                     .first_none_or_else(|iter2| iter2.sum::<u8>())
             });
 
@@ -1048,7 +1048,7 @@ mod tests {
             .into_iter()
             .first_none_or_else(|iter1| {
                 iter1
-                    .map(|x| x) // could chain other ops
+                    // could chain other ops
                     .first_none_or_else(|iter2| iter2.sum::<u8>())
             });
 
@@ -1067,10 +1067,10 @@ mod tests {
             .into_iter()
             .first_none_or_else(|iter1| {
                 iter1
-                    .map(|x| x) // could chain other ops
+                    // could chain other ops
                     .first_none_or_else(|iter2| {
                         iter2
-                            .map(|x| x) // could chain other ops
+                            // could chain other ops
                             .first_none_or_else(|iter3| iter3.sum::<u8>())
                     })
             });
