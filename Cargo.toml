@@ -3,7 +3,7 @@ name = "first-err"
 version = "0.2.1"
 edition = "2021"
 authors = ["visig"]
-description = "Find the first Err in Iterator<Result<T, E>> and allow iterating continuously."
+description = "Find the first Err in Iterator<Item = Result<T, E>> and allow iterating continuously."
 readme = "README.md"
 repository = "https://github.com/visig9/first-err"
 license = "MIT"
